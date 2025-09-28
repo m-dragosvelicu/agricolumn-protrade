@@ -1,0 +1,46 @@
+{
+  "name": "DGAgriData",
+  "type": "object",
+  "properties": {
+    "commodity": {
+      "type": "string",
+      "enum": [
+        "WHEAT",
+        "CORN",
+        "SOYBEAN"
+      ],
+      "description": "Commodity type"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country name"
+    },
+    "trade_type": {
+      "type": "string",
+      "enum": [
+        "EXPORT",
+        "IMPORT"
+      ],
+      "description": "Trade type"
+    },
+    "period": {
+      "type": "string",
+      "description": "Time period (e.g., 01.07-16.09.2025)"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Quantity in metric tons"
+    },
+    "percentage_share": {
+      "type": "number",
+      "description": "Percentage share of total"
+    }
+  },
+  "required": [
+    "commodity",
+    "country",
+    "trade_type",
+    "period",
+    "quantity"
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  { "commodity": "WHEAT", "country": "Saudi Arabia", "trade_type": "EXPORT", "period": "01.07-16.09.2025", "quantity": 182000, "percentage_share": 24.6 },
+  { "commodity": "WHEAT", "country": "Egypt", "trade_type": "EXPORT", "period": "01.07-16.09.2025", "quantity": 165500, "percentage_share": 22.4 },
+  { "commodity": "WHEAT", "country": "Algeria", "trade_type": "EXPORT", "period": "01.07-16.09.2025", "quantity": 143200, "percentage_share": 19.4 },
+  { "commodity": "WHEAT", "country": "Jordan", "trade_type": "EXPORT", "period": "01.07-16.09.2025", "quantity": 111300, "percentage_share": 15.1 },
+  { "commodity": "WHEAT", "country": "Israel", "trade_type": "EXPORT", "period": "01.07-16.09.2025", "quantity": 98200, "percentage_share": 13.3 },
+  { "commodity": "WHEAT", "country": "Lebanon", "trade_type": "EXPORT", "period": "01.07-16.09.2025", "quantity": 76200, "percentage_share": 10.3 },
+  { "commodity": "WHEAT", "country": "Spain", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 125400, "percentage_share": 18.0 },
+  { "commodity": "WHEAT", "country": "Italy", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 118900, "percentage_share": 17.1 },
+  { "commodity": "WHEAT", "country": "Portugal", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 104300, "percentage_share": 15.0 },
+  { "commodity": "WHEAT", "country": "Romania", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 93500, "percentage_share": 13.4 },
+  { "commodity": "WHEAT", "country": "Netherlands", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 87400, "percentage_share": 12.6 },
+  { "commodity": "WHEAT", "country": "Germany", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 82600, "percentage_share": 11.8 },
+  { "commodity": "CORN", "country": "Spain", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 156200, "percentage_share": 21.2 },
+  { "commodity": "CORN", "country": "Netherlands", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 147300, "percentage_share": 20.0 },
+  { "commodity": "CORN", "country": "Italy", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 139800, "percentage_share": 19.0 },
+  { "commodity": "CORN", "country": "Portugal", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 120400, "percentage_share": 16.4 },
+  { "commodity": "CORN", "country": "Romania", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 108900, "percentage_share": 14.8 },
+  { "commodity": "CORN", "country": "Ireland", "trade_type": "IMPORT", "period": "01.07-16.09.2025", "quantity": 95400, "percentage_share": 12.9 }
+]

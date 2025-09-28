@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "title": "Weekly Wheat Outlook",
+    "content": "Romanian wheat export demand remains firm with top buyers from North Africa securing October shipments at premiums amid tight Black Sea logistics.",
+    "commodity_type": "WHEAT",
+    "is_featured": true,
+    "created_date": "2025-09-14"
+  },
+  {
+    "id": 2,
+    "title": "Corn Market Snapshot",
+    "content": "Stronger barge flows on the Danube lifted corn differentials while harvest pressure keeps basis offers competitive for November loadings.",
+    "commodity_type": "CORN",
+    "is_featured": true,
+    "created_date": "2025-09-13"
+  },
+  {
+    "id": 3,
+    "title": "Soybean Complex Update",
+    "content": "Soybean meal bookings into the Middle East rose 8% week on week as crushers chase higher crush margins and tight oil supplies.",
+    "commodity_type": "SOYBEAN",
+    "is_featured": true,
+    "created_date": "2025-09-12"
+  },
+  {
+    "id": 4,
+    "title": "Sunflower Focus",
+    "content": "Sunflower oil spreads narrowed as EU crushers locked in nearby demand; look for basis support if Black Sea weather disrupts loadings.",
+    "commodity_type": "SUNFLOWER",
+    "is_featured": false,
+    "created_date": "2025-09-10"
+  }
+]

@@ -1,0 +1,75 @@
+{
+  "name": "PortConstanta",
+  "type": "object",
+  "properties": {
+    "vessel_name": {
+      "type": "string",
+      "description": "Name of the vessel"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Loading",
+        "Loaded",
+        "In Transit",
+        "Discharged",
+        "Completed"
+      ],
+      "description": "Current status of the vessel"
+    },
+    "departure_country": {
+      "type": "string",
+      "description": "Country of departure"
+    },
+    "departure_port": {
+      "type": "string",
+      "description": "Port of departure"
+    },
+    "departure_terminal": {
+      "type": "string",
+      "description": "Terminal of departure"
+    },
+    "destination_country": {
+      "type": "string",
+      "description": "Destination country"
+    },
+    "operation_type": {
+      "type": "string",
+      "enum": [
+        "Export",
+        "Import",
+        "Transit"
+      ],
+      "description": "Type of operation"
+    },
+    "operation_completed": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when operation was completed"
+    },
+    "commodity_description": {
+      "type": "string",
+      "description": "Description of the commodity"
+    },
+    "shipper": {
+      "type": "string",
+      "description": "Name of the shipper"
+    },
+    "cargo_origin_1": {
+      "type": "string",
+      "description": "Primary cargo origin"
+    },
+    "cargo_origin_2": {
+      "type": "string",
+      "description": "Secondary cargo origin"
+    },
+    "quantity_mt": {
+      "type": "number",
+      "description": "Quantity in metric tons"
+    }
+  },
+  "required": [
+    "vessel_name",
+    "commodity_description"
+  ]
+}
