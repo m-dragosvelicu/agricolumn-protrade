@@ -12,6 +12,7 @@ import { mockPricesData, instrumentGroups } from '@/lib/mockData';
 import { ChartInterval } from '@/types';
 import { PanelHeader } from '@/components/layout/DashboardLayout';
 import { cn } from '@/lib/utils';
+import { calculateYAxisRange } from '@/lib/chartUtils';
 
 interface DailyPricesPanelProps {
   className?: string;
@@ -147,6 +148,12 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
     if (direct) return direct.color;
     return "#8b5cf6";
   }, [selectedInstrument, commodities]);
+
+  // Calculate smart Y-axis range with 5% padding
+  const yAxisDomain = useMemo(() => {
+    const range = calculateYAxisRange(chartData, 'price', 0.05);
+    return [range.min, range.max] as [number, number];
+  }, [chartData]);
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -176,6 +183,7 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
                     <YAxis
                       stroke="#9ca3af"
                       fontSize={12}
+                      domain={yAxisDomain}
                       tickFormatter={(value) => `${value.toFixed(0)} ${selectedUnit}`}
                     />
                     <Tooltip

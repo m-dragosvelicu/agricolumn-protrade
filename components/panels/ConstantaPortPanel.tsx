@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { 
   Search, 
   Filter, 
@@ -62,6 +64,10 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [operationTypeFilter, setOperationTypeFilter] = useState('all');
   const [commodityFilter, setCommodityFilter] = useState('all');
+
+  // Chart view states
+  const [selectedChartCommodity, setSelectedChartCommodity] = useState('Wheat');
+  const [selectedDestinationCountry, setSelectedDestinationCountry] = useState('all');
 
   const filteredAndSortedData = useMemo(() => {
     let filtered = data.filter(row => {
@@ -185,6 +191,35 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
     return pages;
   };
 
+  // Chart data computation
+  const uniqueCommodities = useMemo(() => getUniqueValues('commodity_description'), [data]);
+  const uniqueDestinations = useMemo(() => getUniqueValues('destination_country'), [data]);
+
+  const chartData = useMemo(() => {
+    // Filter data by selected commodity and destination
+    const filtered = data.filter(row => {
+      const matchesCommodity = row.commodity_description === selectedChartCommodity;
+      const matchesDestination = selectedDestinationCountry === 'all' || row.destination_country === selectedDestinationCountry;
+      return matchesCommodity && matchesDestination && row.operation_type === 'Export';
+    });
+
+    // Group by shipper and sum quantities (mock: use random quantities)
+    const shipperData: Record<string, number> = {};
+    filtered.forEach(row => {
+      if (!shipperData[row.shipper]) {
+        shipperData[row.shipper] = 0;
+      }
+      // Mock quantity - in real app this would come from data
+      shipperData[row.shipper] += Math.floor(Math.random() * 10000) + 5000;
+    });
+
+    // Convert to chart format with actual shipper names
+    return Object.entries(shipperData).map(([shipper, qty]) => ({
+      shipper: shipper,
+      quantity: qty,
+    }));
+  }, [data, selectedChartCommodity, selectedDestinationCountry]);
+
   return (
     <Card className={cn('flex flex-col bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50', className)}>
       <PanelHeader
@@ -195,22 +230,83 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
       />
       
       <CardContent className="p-0">
+        {/* Chart View */}
+        <div className="p-4 border-b border-slate-700/50">
+          <h3 className="text-sm font-semibold text-slate-200 mb-3">Shipment Overview</h3>
+
+          {/* Commodity Tabs */}
+          <Tabs value={selectedChartCommodity} onValueChange={setSelectedChartCommodity}>
+            <TabsList className="w-full flex flex-wrap gap-2 mb-3">
+              {uniqueCommodities.map((commodity) => (
+                <TabsTrigger key={commodity} value={commodity}>
+                  {commodity}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          {/* Destination Country Selector */}
+          <div className="mb-4">
+            <Label className="text-sm text-slate-400 mb-2 block">Destination Country</Label>
+            <Select value={selectedDestinationCountry} onValueChange={setSelectedDestinationCountry}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Countries</SelectItem>
+                {uniqueDestinations.map((country) => (
+                  <SelectItem key={country} value={country}>
+                    {country}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Chart */}
+          <div style={{ height: '300px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis
+                  dataKey="shipper"
+                  fontSize={12}
+                  stroke="#9ca3af"
+                />
+                <YAxis
+                  fontSize={12}
+                  tickFormatter={(value) => value.toLocaleString()}
+                  stroke="#9ca3af"
+                  label={{ value: 'QTY (tonnes)', angle: -90, position: 'insideLeft', style: { fill: '#9ca3af' } }}
+                />
+                <Tooltip
+                  formatter={(value: number) => [`${value.toLocaleString()} tonnes`, 'Quantity']}
+                  labelFormatter={(label) => `Shipper: ${label}`}
+                  contentStyle={{
+                    backgroundColor: '#1f2937',
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#ffffff'
+                  }}
+                />
+                <Bar
+                  dataKey="quantity"
+                  fill="hsl(var(--primary))"
+                  name="Quantity"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         {/* Controls */}
         <div className="p-4 border-b border-slate-700/50 space-y-4">
           <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-2 md:space-y-0">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search all columns..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            
+            {/* Mobile: Filters Dialog */}
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="md:hidden">
                   <Filter className="mr-2 h-4 w-4" />
                   Filters
                   {activeFiltersCount > 0 && (
@@ -282,6 +378,60 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
               </DialogContent>
             </Dialog>
 
+            {/* Desktop: Inline Filter Dropdowns */}
+            <div className="hidden md:flex md:items-center md:space-x-2">
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {getUniqueValues('status').map(status => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Operation Type Filter */}
+              <Select value={operationTypeFilter} onValueChange={setOperationTypeFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Operation" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {getUniqueValues('operation_type').map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Commodity Filter */}
+              <Select value={commodityFilter} onValueChange={setCommodityFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Commodity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Commodities</SelectItem>
+                  {getUniqueValues('commodity_description').map(commodity => (
+                    <SelectItem key={commodity} value={commodity}>{commodity}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search all columns..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Columns Dialog */}
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">

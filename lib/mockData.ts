@@ -564,7 +564,7 @@ function generateMockCOTData(): COTData[] {
   return data;
 }
 
-// Mock DG AGRI Trade Data
+// Mock DG AGRI Trade Data (Current Year)
 export const mockDGAgriData: Record<string, any[]> = {
   'EU Wheat Export': [
     { country: 'Romania', value: 1978033, period: '01.07.25-16.09.2025' },
@@ -632,6 +632,203 @@ export const mockDGAgriData: Record<string, any[]> = {
     { country: 'Ukraine', value: 319363, period: '01.07.25-16.09.2025' },
     { country: 'Canada', value: 76758, period: '01.07.25-16.09.2025' },
     { country: 'Togo', value: 16169, period: '01.07.25-16.09.2025' },
+  ],
+  'Barley Import': [
+    { country: 'Ukraine', value: 285420, period: '01.07.25-16.09.2025' },
+    { country: 'Russia', value: 198650, period: '01.07.25-16.09.2025' },
+    { country: 'Serbia', value: 125340, period: '01.07.25-16.09.2025' },
+    { country: 'Australia', value: 89560, period: '01.07.25-16.09.2025' },
+    { country: 'Argentina', value: 45230, period: '01.07.25-16.09.2025' },
+  ],
+  'Rapeseed Export': [
+    { country: 'Romania', value: 163165, period: '01.07.25-16.09.2025' },
+    { country: 'France', value: 456780, period: '01.07.25-16.09.2025' },
+    { country: 'Germany', value: 387650, period: '01.07.25-16.09.2025' },
+    { country: 'Poland', value: 234560, period: '01.07.25-16.09.2025' },
+    { country: 'Czech Republic', value: 145890, period: '01.07.25-16.09.2025' },
+  ],
+  'Rapeseed Import': [
+    { country: 'Ukraine', value: 456780, period: '01.07.25-16.09.2025' },
+    { country: 'Australia', value: 298450, period: '01.07.25-16.09.2025' },
+    { country: 'Canada', value: 187560, period: '01.07.25-16.09.2025' },
+    { country: 'Belarus', value: 123890, period: '01.07.25-16.09.2025' },
+    { country: 'Serbia', value: 76540, period: '01.07.25-16.09.2025' },
+  ],
+  'Sunflower Export': [
+    { country: 'Romania', value: 980000, period: '01.07.25-16.09.2025' },
+    { country: 'Bulgaria', value: 654320, period: '01.07.25-16.09.2025' },
+    { country: 'Hungary', value: 423670, period: '01.07.25-16.09.2025' },
+    { country: 'France', value: 267890, period: '01.07.25-16.09.2025' },
+    { country: 'Slovakia', value: 145230, period: '01.07.25-16.09.2025' },
+  ],
+  'Sunflower Import': [
+    { country: 'Ukraine', value: 1245600, period: '01.07.25-16.09.2025' },
+    { country: 'Russia', value: 876540, period: '01.07.25-16.09.2025' },
+    { country: 'Argentina', value: 234560, period: '01.07.25-16.09.2025' },
+    { country: 'Serbia', value: 187430, period: '01.07.25-16.09.2025' },
+    { country: 'Turkey', value: 123450, period: '01.07.25-16.09.2025' },
+  ],
+  'Rapeseed Oil Export': [
+    { country: 'Germany', value: 567890, period: '01.07.25-16.09.2025' },
+    { country: 'Netherlands', value: 456320, period: '01.07.25-16.09.2025' },
+    { country: 'Belgium', value: 334560, period: '01.07.25-16.09.2025' },
+    { country: 'Poland', value: 278940, period: '01.07.25-16.09.2025' },
+    { country: 'France', value: 198760, period: '01.07.25-16.09.2025' },
+  ],
+  'Rapeseed Oil Import': [
+    { country: 'Ukraine', value: 398760, period: '01.07.25-16.09.2025' },
+    { country: 'Canada', value: 287650, period: '01.07.25-16.09.2025' },
+    { country: 'Australia', value: 198450, period: '01.07.25-16.09.2025' },
+    { country: 'Russia', value: 156340, period: '01.07.25-16.09.2025' },
+    { country: 'India', value: 98760, period: '01.07.25-16.09.2025' },
+  ],
+  'Sunflower Oil Export': [
+    { country: 'Romania', value: 345670, period: '01.07.25-16.09.2025' },
+    { country: 'Bulgaria', value: 289540, period: '01.07.25-16.09.2025' },
+    { country: 'Hungary', value: 198760, period: '01.07.25-16.09.2025' },
+    { country: 'Netherlands', value: 156890, period: '01.07.25-16.09.2025' },
+    { country: 'Germany', value: 123450, period: '01.07.25-16.09.2025' },
+  ],
+  'Sunflower Oil Import': [
+    { country: 'Ukraine', value: 1876540, period: '01.07.25-16.09.2025' },
+    { country: 'Russia', value: 1234560, period: '01.07.25-16.09.2025' },
+    { country: 'Argentina', value: 456780, period: '01.07.25-16.09.2025' },
+    { country: 'Turkey', value: 298760, period: '01.07.25-16.09.2025' },
+    { country: 'India', value: 187650, period: '01.07.25-16.09.2025' },
+  ],
+};
+
+// Mock DG AGRI Trade Data (Last Year - for comparison)
+export const mockDGAgriDataLastYear: Record<string, any[]> = {
+  'EU Wheat Export': [
+    { country: 'Romania', value: 1756820, period: '01.07.24-16.09.2024' },
+    { country: 'Lithuania', value: 468950, period: '01.07.24-16.09.2024' },
+    { country: 'Germany', value: 356780, period: '01.07.24-16.09.2024' },
+    { country: 'Poland', value: 287650, period: '01.07.24-16.09.2024' },
+    { country: 'Bulgaria', value: 215430, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 0, period: '01.07.24-16.09.2024' },
+  ],
+  'Wheat Import': [
+    { country: 'Ukraine', value: 294560, period: '01.07.24-16.09.2024' },
+    { country: 'Canada', value: 289340, period: '01.07.24-16.09.2024' },
+    { country: 'Serbia', value: 122870, period: '01.07.24-16.09.2024' },
+    { country: 'Moldova', value: 118560, period: '01.07.24-16.09.2024' },
+    { country: 'SUA', value: 22890, period: '01.07.24-16.09.2024' },
+  ],
+  'Corn Import': [
+    { country: 'Brazil', value: 1098760, period: '01.07.24-16.09.2024' },
+    { country: 'Ukraine', value: 585430, period: '01.07.24-16.09.2024' },
+    { country: 'SUA', value: 283890, period: '01.07.24-16.09.2024' },
+    { country: 'Canada', value: 206780, period: '01.07.24-16.09.2024' },
+    { country: 'Argentina', value: 36980, period: '01.07.24-16.09.2024' },
+  ],
+  'Romania RPS Export': [
+    { country: 'RPS Export', value: 28970, period: '01.07.23-YTD' },
+    { country: 'RPS Import', value: 51760, period: '01.07.23-YTD' },
+    { country: 'SFS Export Extra EU', value: 851000, period: '01.07.23-YTD' },
+    { country: 'SFS Import', value: 110230, period: '01.07.23-YTD' },
+  ],
+  'Romania Export': [
+    { country: 'Wheat', value: 1948960, period: 'Export 01.07-YTD' },
+    { country: 'Corn', value: 108120, period: 'Export 01.07-YTD' },
+    { country: 'Sunflowerseeds', value: 877000, period: 'Export 01.07-YTD' },
+    { country: 'Barley', value: 848790, period: 'Export 01.07-YTD' },
+    { country: 'Rapeseeds', value: 146230, period: 'Export 01.07-YTD' },
+    { country: 'SFS Oil', value: 72870, period: 'Export 01.07-YTD' },
+  ],
+  'EU Grains Export': [
+    { country: 'Romania', value: 2859870, period: '01.07.24-16.09.2024' },
+    { country: 'Germany', value: 407120, period: '01.07.24-16.09.2024' },
+    { country: 'Lithuania', value: 391230, period: '01.07.24-16.09.2024' },
+    { country: 'Bulgaria', value: 296340, period: '01.07.24-16.09.2024' },
+    { country: 'Poland', value: 233890, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 0, period: '01.07.24-16.09.2024' },
+  ],
+  'EU Corn Export': [
+    { country: 'Romania', value: 30780, period: '01.07.24-16.09.2024' },
+    { country: 'Poland', value: 6750, period: '01.07.24-16.09.2024' },
+    { country: 'Bulgaria', value: 2256, period: '01.07.24-16.09.2024' },
+    { country: 'Germany', value: 1189, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 0, period: '01.07.24-16.09.2024' },
+    { country: 'Lithuania', value: 0, period: '01.07.24-16.09.2024' },
+  ],
+  'Barley Export': [
+    { country: 'Romania', value: 1271230, period: '01.07.24-16.09.2024' },
+    { country: 'Bulgaria', value: 129120, period: '01.07.24-16.09.2024' },
+    { country: 'Germany', value: 86450, period: '01.07.24-16.09.2024' },
+    { country: 'Lithuania', value: 28810, period: '01.07.24-16.09.2024' },
+    { country: 'Poland', value: 718, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 0, period: '01.07.24-16.09.2024' },
+  ],
+  'Barley Import': [
+    { country: 'Ukraine', value: 255670, period: '01.07.24-16.09.2024' },
+    { country: 'Russia', value: 177890, period: '01.07.24-16.09.2024' },
+    { country: 'Serbia', value: 112290, period: '01.07.24-16.09.2024' },
+    { country: 'Australia', value: 80230, period: '01.07.24-16.09.2024' },
+    { country: 'Argentina', value: 40520, period: '01.07.24-16.09.2024' },
+  ],
+  'Rapeseed Export': [
+    { country: 'Romania', value: 146230, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 409340, period: '01.07.24-16.09.2024' },
+    { country: 'Germany', value: 347560, period: '01.07.24-16.09.2024' },
+    { country: 'Poland', value: 210120, period: '01.07.24-16.09.2024' },
+    { country: 'Czech Republic', value: 130780, period: '01.07.24-16.09.2024' },
+  ],
+  'Rapeseed Import': [
+    { country: 'Ukraine', value: 409340, period: '01.07.24-16.09.2024' },
+    { country: 'Australia', value: 267560, period: '01.07.24-16.09.2024' },
+    { country: 'Canada', value: 168120, period: '01.07.24-16.09.2024' },
+    { country: 'Belarus', value: 111010, period: '01.07.24-16.09.2024' },
+    { country: 'Serbia', value: 68650, period: '01.07.24-16.09.2024' },
+  ],
+  'Sunflower Export': [
+    { country: 'Romania', value: 877000, period: '01.07.24-16.09.2024' },
+    { country: 'Bulgaria', value: 586450, period: '01.07.24-16.09.2024' },
+    { country: 'Hungary', value: 379670, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 240010, period: '01.07.24-16.09.2024' },
+    { country: 'Slovakia', value: 130120, period: '01.07.24-16.09.2024' },
+  ],
+  'Sunflower Import': [
+    { country: 'Ukraine', value: 1116780, period: '01.07.24-16.09.2024' },
+    { country: 'Russia', value: 785670, period: '01.07.24-16.09.2024' },
+    { country: 'Argentina', value: 210230, period: '01.07.24-16.09.2024' },
+    { country: 'Serbia', value: 168010, period: '01.07.24-16.09.2024' },
+    { country: 'Turkey', value: 110670, period: '01.07.24-16.09.2024' },
+  ],
+  'Rapeseed Oil Export': [
+    { country: 'Germany', value: 509120, period: '01.07.24-16.09.2024' },
+    { country: 'Netherlands', value: 409010, period: '01.07.24-16.09.2024' },
+    { country: 'Belgium', value: 299780, period: '01.07.24-16.09.2024' },
+    { country: 'Poland', value: 250010, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 178120, period: '01.07.24-16.09.2024' },
+  ],
+  'Rapeseed Oil Import': [
+    { country: 'Ukraine', value: 357120, period: '01.07.24-16.09.2024' },
+    { country: 'Canada', value: 257890, period: '01.07.24-16.09.2024' },
+    { country: 'Australia', value: 177890, period: '01.07.24-16.09.2024' },
+    { country: 'Russia', value: 140120, period: '01.07.24-16.09.2024' },
+    { country: 'India', value: 88560, period: '01.07.24-16.09.2024' },
+  ],
+  'Sunflower Oil Export': [
+    { country: 'Romania', value: 310010, period: '01.07.24-16.09.2024' },
+    { country: 'Bulgaria', value: 259670, period: '01.07.24-16.09.2024' },
+    { country: 'Hungary', value: 178120, period: '01.07.24-16.09.2024' },
+    { country: 'Netherlands', value: 140560, period: '01.07.24-16.09.2024' },
+    { country: 'Germany', value: 110670, period: '01.07.24-16.09.2024' },
+  ],
+  'Sunflower Oil Import': [
+    { country: 'Ukraine', value: 1682340, period: '01.07.24-16.09.2024' },
+    { country: 'Russia', value: 1106780, period: '01.07.24-16.09.2024' },
+    { country: 'Argentina', value: 409340, period: '01.07.24-16.09.2024' },
+    { country: 'Turkey', value: 267890, period: '01.07.24-16.09.2024' },
+    { country: 'India', value: 168120, period: '01.07.24-16.09.2024' },
+  ],
+  'Soybean Import': [
+    { country: 'Brazil', value: 1456780, period: '01.07.24-16.09.2024' },
+    { country: 'USA', value: 558340, period: '01.07.24-16.09.2024' },
+    { country: 'Ukraine', value: 286120, period: '01.07.24-16.09.2024' },
+    { country: 'Canada', value: 68780, period: '01.07.24-16.09.2024' },
+    { country: 'Togo', value: 14490, period: '01.07.24-16.09.2024' },
   ],
 };
 

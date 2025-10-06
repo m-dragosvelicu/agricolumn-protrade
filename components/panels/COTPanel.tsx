@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,6 +8,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { mockCOTData } from '@/lib/mockData';
 import { PanelHeader } from '@/components/layout/DashboardLayout';
 import { cn } from '@/lib/utils';
+import { calculateYAxisRange } from '@/lib/chartUtils';
 
 interface COTPanelProps {
   className?: string;
@@ -16,6 +17,12 @@ interface COTPanelProps {
 export function COTPanel({ className }: COTPanelProps) {
   const [selectedCommodity, setSelectedCommodity] = useState('CBOT Wheat');
   const data = mockCOTData[selectedCommodity] || [];
+
+  // Calculate smart Y-axis range with 5% padding
+  const yAxisDomain = useMemo(() => {
+    const range = calculateYAxisRange(data, 'price', 0.05);
+    return [range.min, range.max] as [number, number];
+  }, [data]);
 
   const exportData = () => {
     const csv = [
@@ -68,7 +75,12 @@ export function COTPanel({ className }: COTPanelProps) {
               <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} />
-                <YAxis stroke="#9ca3af" fontSize={12} />
+                <YAxis 
+                  stroke="#9ca3af" 
+                  fontSize={12} 
+                  domain={yAxisDomain}
+                  tickFormatter={(value) => value.toFixed(2)}
+                />
                 <Tooltip 
                   formatter={(value: number) => [value.toFixed(2), 'Price']}
                   labelFormatter={(value) => `Date: ${value}`}
