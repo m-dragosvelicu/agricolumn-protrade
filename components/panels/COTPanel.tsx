@@ -43,19 +43,20 @@ export function COTPanel({ className }: COTPanelProps) {
   return (
     <Card className={cn('h-full flex flex-col bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50', className)}>
       <CardHeader>
-        <CardTitle className="text-white">Futures Prices</CardTitle>
+        <CardTitle className="text-white">FUNDS NET POSITION</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-0">
         {/* Commodity Tabs */}
         <div className="p-4 border-b border-slate-700/50">
           <Tabs value={selectedCommodity} onValueChange={setSelectedCommodity}>
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="CBOT Wheat">CBOT Wheat</TabsTrigger>
-              <TabsTrigger value="CBOT Corn">CBOT Corn</TabsTrigger>
-              <TabsTrigger value="CBOT Soybean">CBOT Soy</TabsTrigger>
-              <TabsTrigger value="Euronext Wheat">EUR Wheat</TabsTrigger>
-              <TabsTrigger value="Euronext Corn">EUR Corn</TabsTrigger>
-              <TabsTrigger value="Euronext RPS">EUR RPS</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-7">
+              <TabsTrigger value="CBOT Wheat">CFTC CME WHEAT</TabsTrigger>
+              <TabsTrigger value="CBOT Corn">CFTC CME CORN</TabsTrigger>
+              <TabsTrigger value="CBOT Soybean">CFTC CME SOYBEANS</TabsTrigger>
+              <TabsTrigger value="CBOT Soy Oil">CFTC CME SOY OIL</TabsTrigger>
+              <TabsTrigger value="Euronext Wheat">COT EUR WHEAT</TabsTrigger>
+              <TabsTrigger value="Euronext Corn">COT EUR CORN</TabsTrigger>
+              <TabsTrigger value="Euronext RPS">COT EUR RPS</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -75,14 +76,13 @@ export function COTPanel({ className }: COTPanelProps) {
               <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} />
-                <YAxis 
-                  stroke="#9ca3af" 
-                  fontSize={12} 
-                  domain={yAxisDomain}
-                  tickFormatter={(value) => value.toFixed(2)}
+                <YAxis
+                  stroke="#9ca3af"
+                  fontSize={12}
+                  tickFormatter={(value) => value.toLocaleString()}
                 />
-                <Tooltip 
-                  formatter={(value: number) => [value.toFixed(2), 'Price']}
+                <Tooltip
+                  formatter={(value: number) => [value.toLocaleString(), 'Net Position']}
                   labelFormatter={(value) => `Date: ${value}`}
                   contentStyle={{
                     backgroundColor: '#1f2937',
@@ -92,13 +92,38 @@ export function COTPanel({ className }: COTPanelProps) {
                   }}
                 />
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="price"
-                  stroke="hsl(var(--primary))"
+                  stroke="#eab308"
                   strokeWidth={3}
-                  dot={false}
-                  activeDot={{ r: 5, fill: 'hsl(var(--primary))' }}
+                  dot={{ r: 0 }}
+                  activeDot={{ r: 5, fill: '#eab308' }}
                   name={selectedCommodity}
+                  label={{
+                    position: 'top',
+                    content: ({ x, y, value }: any) => (
+                      <g>
+                        <rect
+                          x={x - 25}
+                          y={y - 20}
+                          width={50}
+                          height={16}
+                          fill="#eab308"
+                          rx={3}
+                        />
+                        <text
+                          x={x}
+                          y={y - 8}
+                          textAnchor="middle"
+                          fill="#000000"
+                          fontSize={10}
+                          fontWeight="bold"
+                        >
+                          {value.toLocaleString()}
+                        </text>
+                      </g>
+                    )
+                  }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -108,8 +133,11 @@ export function COTPanel({ className }: COTPanelProps) {
         {/* Note */}
         <div className="p-4 border-t border-slate-700/50">
           <p className="text-xs text-muted-foreground">
-            Futures prices for CBOT and Euronext commodities. 
-            Data updated weekly. Prices shown in cents per bushel for grains and USD per metric ton for others.
+            Net positions from funds in commodity futures markets.
+            Data updated weekly (7-day cadence). Values represent net long/short positions in number of contracts.
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            COT = Commitment of Traders | CFTC = Commodities Futures Trading Commission
           </p>
         </div>
       </CardContent>

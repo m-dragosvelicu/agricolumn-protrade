@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -36,6 +37,25 @@ interface ConstantaPortPanelProps {
 type SortField = keyof VesselData;
 type SortDirection = 'asc' | 'desc';
 
+// Commodity display mapping
+const getCommodityLabel = (commodity: string): string => {
+  const mappings: Record<string, string> = {
+    'Wheat': 'WHEAT',
+    'Corn': 'CORN',
+    'Barley': 'BARLEY',
+    'Rapeseeds': 'RPS',
+    'Sunflower Seeds': 'SFS',
+    'Rapeseeds Oil': 'RPS OIL',
+    'Sunflower seeds oil': 'SFS OIL',
+    'Sunflower Seeds Oil': 'SFS OIL',
+    'Rapeseeds meal': 'RPS MEAL',
+    'Rapeseeds Meal': 'RPS MEAL',
+    'Sunflower seeds meal': 'SFS MEAL',
+    'Sunflower Seeds Meal': 'SFS MEAL',
+  };
+  return mappings[commodity] || commodity.toUpperCase();
+};
+
 const columns = [
   { key: 'vessel_name' as SortField, label: 'Vessel Name', visible: true },
   { key: 'status' as SortField, label: 'Status', visible: true },
@@ -61,13 +81,19 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [operationTypeFilter, setOperationTypeFilter] = useState('all');
   const [commodityFilter, setCommodityFilter] = useState('all');
+  const [operationTypeFilter, setOperationTypeFilter] = useState('all');
+  const [quantityFilter, setQuantityFilter] = useState('all');
+  const [shipperFilter, setShipperFilter] = useState('all');
+  const [destinationFilter, setDestinationFilter] = useState('all');
+  const [vesselNameFilter, setVesselNameFilter] = useState('all');
+  const [terminalFilter, setTerminalFilter] = useState('all');
+  const [operationStatusFilter, setOperationStatusFilter] = useState<string[]>([]);
 
   // Chart view states
   const [selectedChartCommodity, setSelectedChartCommodity] = useState('Wheat');
-  const [selectedDestinationCountry, setSelectedDestinationCountry] = useState('all');
+  const [selectedDestinationCountries, setSelectedDestinationCountries] = useState<string[]>([]);
+  const [countrySearchTerm, setCountrySearchTerm] = useState('');
 
   const filteredAndSortedData = useMemo(() => {
     let filtered = data.filter(row => {
@@ -75,11 +101,16 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
         value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
       );
 
-      const matchesStatus = statusFilter === 'all' || row.status === statusFilter;
-      const matchesOperationType = operationTypeFilter === 'all' || row.operation_type === operationTypeFilter;
       const matchesCommodity = commodityFilter === 'all' || row.commodity_description === commodityFilter;
+      const matchesOperationType = operationTypeFilter === 'all' || row.operation_type === operationTypeFilter;
+      const matchesShipper = shipperFilter === 'all' || row.shipper === shipperFilter;
+      const matchesDestination = destinationFilter === 'all' || row.destination_country === destinationFilter;
+      const matchesVesselName = vesselNameFilter === 'all' || row.vessel_name === vesselNameFilter;
+      const matchesTerminal = terminalFilter === 'all' || row.departure_terminal === terminalFilter;
+      const matchesOperationStatus = operationStatusFilter.length === 0 || operationStatusFilter.includes(row.status);
 
-      return matchesSearch && matchesStatus && matchesOperationType && matchesCommodity;
+      return matchesSearch && matchesCommodity && matchesOperationType && matchesShipper && 
+             matchesDestination && matchesVesselName && matchesTerminal && matchesOperationStatus;
     });
 
     filtered.sort((a, b) => {
@@ -99,7 +130,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
     });
 
     return filtered;
-  }, [data, searchTerm, sortField, sortDirection, statusFilter, operationTypeFilter, commodityFilter]);
+  }, [data, searchTerm, sortField, sortDirection, commodityFilter, operationTypeFilter, shipperFilter, destinationFilter, vesselNameFilter, terminalFilter, operationStatusFilter]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -111,7 +142,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   // Reset to first page when filters or search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, operationTypeFilter, commodityFilter]);
+  }, [searchTerm, commodityFilter, operationTypeFilter, shipperFilter, destinationFilter, vesselNameFilter, terminalFilter, operationStatusFilter]);
 
   // Clamp current page if total pages shrink below current
   useEffect(() => {
@@ -143,13 +174,24 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   };
 
   const clearFilters = () => {
-    setStatusFilter('all');
-    setOperationTypeFilter('all');
     setCommodityFilter('all');
+    setOperationTypeFilter('all');
+    setShipperFilter('all');
+    setDestinationFilter('all');
+    setVesselNameFilter('all');
+    setTerminalFilter('all');
+    setOperationStatusFilter([]);
     setSearchTerm('');
   };
 
-  const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (operationTypeFilter !== 'all' ? 1 : 0) + (commodityFilter !== 'all' ? 1 : 0);
+  const activeFiltersCount = 
+    (commodityFilter !== 'all' ? 1 : 0) + 
+    (operationTypeFilter !== 'all' ? 1 : 0) + 
+    (shipperFilter !== 'all' ? 1 : 0) + 
+    (destinationFilter !== 'all' ? 1 : 0) + 
+    (vesselNameFilter !== 'all' ? 1 : 0) + 
+    (terminalFilter !== 'all' ? 1 : 0) + 
+    (operationStatusFilter.length > 0 ? 1 : 0);
 
   const exportCSV = () => {
     const visibleCols = columns.filter(col => visibleColumns[col.key]);
@@ -195,11 +237,19 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   const uniqueCommodities = useMemo(() => getUniqueValues('commodity_description'), [data]);
   const uniqueDestinations = useMemo(() => getUniqueValues('destination_country'), [data]);
 
+  // Filtered countries based on search
+  const filteredCountries = useMemo(() => {
+    if (!countrySearchTerm) return uniqueDestinations;
+    return uniqueDestinations.filter(country =>
+      country.toLowerCase().includes(countrySearchTerm.toLowerCase())
+    );
+  }, [uniqueDestinations, countrySearchTerm]);
+
   const chartData = useMemo(() => {
-    // Filter data by selected commodity and destination
+    // Filter data by selected commodity and destinations
     const filtered = data.filter(row => {
       const matchesCommodity = row.commodity_description === selectedChartCommodity;
-      const matchesDestination = selectedDestinationCountry === 'all' || row.destination_country === selectedDestinationCountry;
+      const matchesDestination = selectedDestinationCountries.length === 0 || selectedDestinationCountries.includes(row.destination_country);
       return matchesCommodity && matchesDestination && row.operation_type === 'Export';
     });
 
@@ -218,7 +268,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
       shipper: shipper,
       quantity: qty,
     }));
-  }, [data, selectedChartCommodity, selectedDestinationCountry]);
+  }, [data, selectedChartCommodity, selectedDestinationCountries]);
 
   return (
     <Card className={cn('flex flex-col bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50', className)}>
@@ -232,14 +282,14 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
       <CardContent className="p-0">
         {/* Chart View */}
         <div className="p-4 border-b border-slate-700/50">
-          <h3 className="text-sm font-semibold text-slate-200 mb-3">Shipment Overview</h3>
+          <h3 className="text-sm font-semibold text-slate-200 mb-3">EXPORT OVERVIEW</h3>
 
           {/* Commodity Tabs */}
           <Tabs value={selectedChartCommodity} onValueChange={setSelectedChartCommodity}>
             <TabsList className="w-full flex flex-wrap gap-2 mb-3">
               {uniqueCommodities.map((commodity) => (
                 <TabsTrigger key={commodity} value={commodity}>
-                  {commodity}
+                  {getCommodityLabel(commodity)}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -247,20 +297,100 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
 
           {/* Destination Country Selector */}
           <div className="mb-4">
-            <Label className="text-sm text-slate-400 mb-2 block">Destination Country</Label>
-            <Select value={selectedDestinationCountry} onValueChange={setSelectedDestinationCountry}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select country" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Countries</SelectItem>
-                {uniqueDestinations.map((country) => (
-                  <SelectItem key={country} value={country}>
-                    {country}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-sm text-slate-400 mb-2 block">Destination Countries</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <span className="text-sm">
+                    {selectedDestinationCountries.length === 0
+                      ? 'Select countries...'
+                      : `${selectedDestinationCountries.length} ${selectedDestinationCountries.length === 1 ? 'country' : 'countries'} selected`}
+                  </span>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] p-0" align="start">
+                <div className="border-b border-slate-700/50 bg-slate-800/60">
+                  {/* Search Box */}
+                  <div className="p-3">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search countries..."
+                        value={countrySearchTerm}
+                        onChange={(e) => setCountrySearchTerm(e.target.value)}
+                        className="pl-8 h-9"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Select All / Clear All Header */}
+                  <div className="flex items-center justify-between px-3 pb-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="select-all-countries"
+                        checked={selectedDestinationCountries.length === uniqueDestinations.length && uniqueDestinations.length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedDestinationCountries([...uniqueDestinations]);
+                          } else {
+                            setSelectedDestinationCountries([]);
+                          }
+                        }}
+                      />
+                      <Label htmlFor="select-all-countries" className="text-xs font-medium text-slate-300 cursor-pointer">
+                        Select All
+                      </Label>
+                    </div>
+                    {selectedDestinationCountries.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedDestinationCountries([])}
+                        className="h-6 text-xs px-2"
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Scrollable Country List */}
+                <div className="max-h-[250px] overflow-y-auto">
+                  <div className="p-2 space-y-1">
+                    {filteredCountries.length > 0 ? (
+                      filteredCountries.map((country) => (
+                        <div
+                          key={country}
+                          className="flex items-center space-x-2 hover:bg-slate-700/30 p-2 rounded transition-colors cursor-pointer"
+                          onClick={() => {
+                            if (selectedDestinationCountries.includes(country)) {
+                              setSelectedDestinationCountries(selectedDestinationCountries.filter(c => c !== country));
+                            } else {
+                              setSelectedDestinationCountries([...selectedDestinationCountries, country]);
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            id={`dest-${country}`}
+                            checked={selectedDestinationCountries.includes(country)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="pointer-events-none"
+                          />
+                          <span className="text-sm text-slate-300 flex-1">
+                            {country}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-sm text-slate-400">
+                        No countries found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Chart */}
@@ -302,11 +432,185 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
 
         {/* Controls */}
         <div className="p-4 border-b border-slate-700/50 space-y-4">
-          <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-2 md:space-y-0">
-            {/* Mobile: Filters Dialog */}
+          {/* Main Filter Row - Desktop */}
+          <div className="hidden lg:flex lg:flex-wrap lg:items-end lg:gap-3">
+            {/* Commodity Filter */}
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Commodity</Label>
+              <Select value={commodityFilter} onValueChange={setCommodityFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Commodities</SelectItem>
+                  {getUniqueValues('commodity_description').map(commodity => (
+                    <SelectItem key={commodity} value={commodity}>{getCommodityLabel(commodity)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Operation Type Filter */}
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Operation Type</Label>
+              <Select value={operationTypeFilter} onValueChange={setOperationTypeFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {getUniqueValues('operation_type').map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Quantity Filter */}
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Quantity</Label>
+              <Select value={quantityFilter} onValueChange={setQuantityFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Quantities</SelectItem>
+                  <SelectItem value="<5000">{"< 5,000 mt"}</SelectItem>
+                  <SelectItem value="5000-10000">5,000 - 10,000 mt</SelectItem>
+                  <SelectItem value=">10000">{"> 10,000 mt"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Shipper/Exporter Filter */}
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Exporter / Importer</Label>
+              <Select value={shipperFilter} onValueChange={setShipperFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Shippers</SelectItem>
+                  {getUniqueValues('shipper').map(shipper => (
+                    <SelectItem key={shipper} value={shipper}>{shipper}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Destination Filter */}
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Destination</Label>
+              <Select value={destinationFilter} onValueChange={setDestinationFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Destinations</SelectItem>
+                  {getUniqueValues('destination_country').map(dest => (
+                    <SelectItem key={dest} value={dest}>{dest}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Vessel Name Filter */}
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Vessel Name</Label>
+              <Select value={vesselNameFilter} onValueChange={setVesselNameFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Vessels</SelectItem>
+                  {getUniqueValues('vessel_name').map(vessel => (
+                    <SelectItem key={vessel} value={vessel}>{vessel}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Terminal Filter */}
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Terminal</Label>
+              <Select value={terminalFilter} onValueChange={setTerminalFilter}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Terminals</SelectItem>
+                  {getUniqueValues('departure_terminal').map(terminal => (
+                    <SelectItem key={terminal} value={terminal}>{terminal}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Operation Status - Multi-select */}
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Operation Status</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[160px] justify-between h-10">
+                    <span className="text-sm">
+                      {operationStatusFilter.length === 0
+                        ? 'All'
+                        : `${operationStatusFilter.length} selected`}
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0" align="start">
+                  <div className="p-2 space-y-1">
+                    {['ETA', 'Loading', 'Loaded', 'In Transit', 'Discharged', 'Completed'].map((status) => (
+                      <div
+                        key={status}
+                        className="flex items-center space-x-2 hover:bg-slate-700/30 p-2 rounded transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (operationStatusFilter.includes(status)) {
+                            setOperationStatusFilter(operationStatusFilter.filter(s => s !== status));
+                          } else {
+                            setOperationStatusFilter([...operationStatusFilter, status]);
+                          }
+                        }}
+                      >
+                        <Checkbox
+                          id={`status-${status}`}
+                          checked={operationStatusFilter.includes(status)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="pointer-events-none"
+                        />
+                        <span className="text-sm text-slate-300 flex-1">
+                          {status}
+                        </span>
+                      </div>
+                    ))}
+                    {operationStatusFilter.length > 0 && (
+                      <div className="pt-2 border-t border-slate-700/50">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOperationStatusFilter([]);
+                          }}
+                          className="w-full text-xs"
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Mobile: Filters Dialog */}
+          <div className="lg:hidden">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="md:hidden">
+                <Button variant="outline" size="sm" className="w-full">
                   <Filter className="mr-2 h-4 w-4" />
                   Filters
                   {activeFiltersCount > 0 && (
@@ -316,22 +620,22 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                   )}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Filter Data</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  {/* Status Filter */}
+                  {/* Commodity Filter */}
                   <div>
-                    <Label className="text-sm font-medium">Status</Label>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <Label className="text-sm font-medium">Commodity</Label>
+                    <Select value={commodityFilter} onValueChange={setCommodityFilter}>
                       <SelectTrigger>
-                        <SelectValue placeholder="All statuses" />
+                        <SelectValue placeholder="All commodities" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        {getUniqueValues('status').map(status => (
-                          <SelectItem key={status} value={status}>{status}</SelectItem>
+                        <SelectItem value="all">All Commodities</SelectItem>
+                        {getUniqueValues('commodity_description').map(commodity => (
+                          <SelectItem key={commodity} value={commodity}>{getCommodityLabel(commodity)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -353,23 +657,112 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                     </Select>
                   </div>
 
-                  {/* Commodity Filter */}
+                  {/* Quantity Filter */}
                   <div>
-                    <Label className="text-sm font-medium">Commodity</Label>
-                    <Select value={commodityFilter} onValueChange={setCommodityFilter}>
+                    <Label className="text-sm font-medium">Quantity</Label>
+                    <Select value={quantityFilter} onValueChange={setQuantityFilter}>
                       <SelectTrigger>
-                        <SelectValue placeholder="All commodities" />
+                        <SelectValue placeholder="All quantities" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Commodities</SelectItem>
-                        {getUniqueValues('commodity_description').map(commodity => (
-                          <SelectItem key={commodity} value={commodity}>{commodity}</SelectItem>
+                        <SelectItem value="all">All Quantities</SelectItem>
+                        <SelectItem value="<5000">{"< 5,000 mt"}</SelectItem>
+                        <SelectItem value="5000-10000">5,000 - 10,000 mt</SelectItem>
+                        <SelectItem value=">10000">{"> 10,000 mt"}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Shipper Filter */}
+                  <div>
+                    <Label className="text-sm font-medium">Exporter/Importer</Label>
+                    <Select value={shipperFilter} onValueChange={setShipperFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All shippers" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Shippers</SelectItem>
+                        {getUniqueValues('shipper').map(shipper => (
+                          <SelectItem key={shipper} value={shipper}>{shipper}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="flex justify-between">
+                  {/* Destination Filter */}
+                  <div>
+                    <Label className="text-sm font-medium">Destination</Label>
+                    <Select value={destinationFilter} onValueChange={setDestinationFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All destinations" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Destinations</SelectItem>
+                        {getUniqueValues('destination_country').map(dest => (
+                          <SelectItem key={dest} value={dest}>{dest}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Vessel Name Filter */}
+                  <div>
+                    <Label className="text-sm font-medium">Vessel Name</Label>
+                    <Select value={vesselNameFilter} onValueChange={setVesselNameFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All vessels" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Vessels</SelectItem>
+                        {getUniqueValues('vessel_name').map(vessel => (
+                          <SelectItem key={vessel} value={vessel}>{vessel}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Terminal Filter */}
+                  <div>
+                    <Label className="text-sm font-medium">Terminal</Label>
+                    <Select value={terminalFilter} onValueChange={setTerminalFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All terminals" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Terminals</SelectItem>
+                        {getUniqueValues('departure_terminal').map(terminal => (
+                          <SelectItem key={terminal} value={terminal}>{terminal}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Operation Status Multi-select */}
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Operation Status</Label>
+                    <div className="space-y-2 border border-slate-700/50 rounded-md p-3">
+                      {['ETA', 'Loading', 'Loaded', 'In Transit', 'Discharged', 'Completed'].map((status) => (
+                        <div key={status} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`mobile-status-${status}`}
+                            checked={operationStatusFilter.includes(status)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setOperationStatusFilter([...operationStatusFilter, status]);
+                              } else {
+                                setOperationStatusFilter(operationStatusFilter.filter(s => s !== status));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`mobile-status-${status}`} className="text-sm cursor-pointer">
+                            {status}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between pt-2">
                     <Button variant="outline" onClick={clearFilters}>
                       Clear All
                     </Button>
@@ -377,49 +770,10 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                 </div>
               </DialogContent>
             </Dialog>
+          </div>
 
-            {/* Desktop: Inline Filter Dropdowns */}
-            <div className="hidden md:flex md:items-center md:space-x-2">
-              {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  {getUniqueValues('status').map(status => (
-                    <SelectItem key={status} value={status}>{status}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Operation Type Filter */}
-              <Select value={operationTypeFilter} onValueChange={setOperationTypeFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Operation" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {getUniqueValues('operation_type').map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Commodity Filter */}
-              <Select value={commodityFilter} onValueChange={setCommodityFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Commodity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Commodities</SelectItem>
-                  {getUniqueValues('commodity_description').map(commodity => (
-                    <SelectItem key={commodity} value={commodity}>{commodity}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          {/* Search Bar and Columns - Second Row */}
+          <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
             {/* Search Bar */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -469,12 +823,12 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
           {/* Active Filters */}
           {activeFiltersCount > 0 && (
             <div className="flex flex-wrap gap-2">
-              {statusFilter !== 'all' && (
+              {commodityFilter !== 'all' && (
                 <Badge variant="secondary" className="gap-1">
-                  Status: {statusFilter}
+                  Commodity: {getCommodityLabel(commodityFilter)}
                   <X
                     className="h-3 w-3 cursor-pointer"
-                    onClick={() => setStatusFilter('all')}
+                    onClick={() => setCommodityFilter('all')}
                   />
                 </Badge>
               )}
@@ -487,12 +841,48 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                   />
                 </Badge>
               )}
-              {commodityFilter !== 'all' && (
+              {shipperFilter !== 'all' && (
                 <Badge variant="secondary" className="gap-1">
-                  Commodity: {commodityFilter}
+                  Shipper: {shipperFilter}
                   <X
                     className="h-3 w-3 cursor-pointer"
-                    onClick={() => setCommodityFilter('all')}
+                    onClick={() => setShipperFilter('all')}
+                  />
+                </Badge>
+              )}
+              {destinationFilter !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Destination: {destinationFilter}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => setDestinationFilter('all')}
+                  />
+                </Badge>
+              )}
+              {vesselNameFilter !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Vessel: {vesselNameFilter}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => setVesselNameFilter('all')}
+                  />
+                </Badge>
+              )}
+              {terminalFilter !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Terminal: {terminalFilter}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => setTerminalFilter('all')}
+                  />
+                </Badge>
+              )}
+              {operationStatusFilter.length > 0 && (
+                <Badge variant="secondary" className="gap-1">
+                  Status: {operationStatusFilter.length} selected
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => setOperationStatusFilter([])}
                   />
                 </Badge>
               )}

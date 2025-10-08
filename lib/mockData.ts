@@ -163,7 +163,7 @@ export const mockVesselData: VesselData[] = [
     "destination_country": "Turkey",
     "operation_type": "Export",
     "operation_completed": "2025-08-19",
-    "commodity_description": "Rapeseed",
+    "commodity_description": "Rapeseeds",
     "shipper": "Delta Agro",
     "cargo_origin_1": "Brăila",
     "cargo_origin_2": "Ialomița"
@@ -208,7 +208,7 @@ export const mockVesselData: VesselData[] = [
     "destination_country": "Saudi Arabia",
     "operation_type": "Export",
     "operation_completed": "2025-08-31",
-    "commodity_description": "Soybean Meal",
+    "commodity_description": "Sunflower seeds meal",
     "shipper": "AgriTrans",
     "cargo_origin_1": "Timiș",
     "cargo_origin_2": "Arad"
@@ -223,7 +223,7 @@ export const mockVesselData: VesselData[] = [
     "destination_country": "Netherlands",
     "operation_type": "Export",
     "operation_completed": "2025-08-15",
-    "commodity_description": "Sunflower Oil",
+    "commodity_description": "Sunflower seeds oil",
     "shipper": "BlackSea Commodities",
     "cargo_origin_1": "Dolj",
     "cargo_origin_2": "Olt"
@@ -283,7 +283,7 @@ export const mockVesselData: VesselData[] = [
     "destination_country": "Romania",
     "operation_type": "Import",
     "operation_completed": "2025-09-18",
-    "commodity_description": "Soybean Meal",
+    "commodity_description": "Rapeseeds meal",
     "shipper": "Black Sea Imports",
     "cargo_origin_1": "Odessa",
     "cargo_origin_2": "Mykolaiv"
@@ -298,7 +298,7 @@ export const mockVesselData: VesselData[] = [
     "destination_country": "Romania",
     "operation_type": "Import",
     "operation_completed": "2025-09-16",
-    "commodity_description": "Sunflower Oil",
+    "commodity_description": "Rapeseeds Oil",
     "shipper": "Adriatic Logistics",
     "cargo_origin_1": "Varna",
     "cargo_origin_2": "Burgas"
@@ -328,7 +328,7 @@ export const mockVesselData: VesselData[] = [
     "destination_country": "Romania",
     "operation_type": "Import",
     "operation_completed": "2025-08-25",
-    "commodity_description": "Rice",
+    "commodity_description": "Wheat",
     "shipper": "Mediterranean Grains",
     "cargo_origin_1": "Thessaloniki",
     "cargo_origin_2": "Kavala"
@@ -468,79 +468,77 @@ function generateMockPriceData(basePrice: number, maxPrice: number): PriceData[]
   return data;
 }
 
-// Real Futures Price Data from your table
+// CFTC/COT Net Position Data - 8 weeks of data with 7-day cadence
 export const mockCOTData: Record<string, any[]> = {
   'CBOT Wheat': [
-    { date: '2025-07-15', price: 603.25 },
-    { date: '2025-07-23', price: 615.50 },
-    { date: '2025-07-30', price: 617.25 },
-    { date: '2025-08-06', price: 614.25 },
-    { date: '2025-08-13', price: 611.25 },
-    { date: '2025-08-20', price: 607.50 },
-    { date: '2025-08-27', price: 614.00 },
-    { date: '2025-09-03', price: 616.25 },
-    { date: '2025-09-10', price: 614.25 },
-    { date: '2025-09-17', price: 616.25 }
+    { date: '20.08.2025', price: -4261 },
+    { date: '27.08.2025', price: 20818 },
+    { date: '02.09.2025', price: 11964 },
+    { date: '09.09.2025', price: -14714 },
+    { date: '16.09.2025', price: -2287 },
+    { date: '23.09.2025', price: -29302 },
+    { date: '30.09.2025', price: -15432 },
+    { date: '07.10.2025', price: 8956 }
   ],
   'CBOT Corn': [
-    { date: '2025-07-15', price: 431.25 },
-    { date: '2025-07-23', price: 435.50 },
-    { date: '2025-07-30', price: 438.75 },
-    { date: '2025-08-06', price: 441.50 },
-    { date: '2025-08-13', price: 445.25 },
-    { date: '2025-08-20', price: 448.75 },
-    { date: '2025-08-27', price: 452.25 },
-    { date: '2025-09-03', price: 456.00 },
-    { date: '2025-09-10', price: 459.75 },
-    { date: '2025-09-17', price: 463.25 }
+    { date: '20.08.2025', price: 125430 },
+    { date: '27.08.2025', price: 138920 },
+    { date: '02.09.2025', price: 142560 },
+    { date: '09.09.2025', price: 135670 },
+    { date: '16.09.2025', price: 128340 },
+    { date: '23.09.2025', price: 119230 },
+    { date: '30.09.2025', price: 132450 },
+    { date: '07.10.2025', price: 145670 }
   ],
   'CBOT Soybean': [
-    { date: '2025-07-15', price: 1053.25 },
-    { date: '2025-07-23', price: 1058.75 },
-    { date: '2025-07-30', price: 1062.50 },
-    { date: '2025-08-06', price: 1067.25 },
-    { date: '2025-08-13', price: 1071.75 },
-    { date: '2025-08-20', price: 1076.25 },
-    { date: '2025-08-27', price: 1080.75 },
-    { date: '2025-09-03', price: 1085.25 },
-    { date: '2025-09-10', price: 1089.75 },
-    { date: '2025-09-17', price: 1094.25 }
+    { date: '20.08.2025', price: -4261 },
+    { date: '27.08.2025', price: 20818 },
+    { date: '02.09.2025', price: 11964 },
+    { date: '09.09.2025', price: -14714 },
+    { date: '16.09.2025', price: -2287 },
+    { date: '23.09.2025', price: -29302 },
+    { date: '30.09.2025', price: -18560 },
+    { date: '07.10.2025', price: 12340 }
   ],
   'Euronext Wheat': [
-    { date: '2025-07-15', price: 215.50 },
-    { date: '2025-07-23', price: 218.25 },
-    { date: '2025-07-30', price: 221.00 },
-    { date: '2025-08-06', price: 223.75 },
-    { date: '2025-08-13', price: 226.50 },
-    { date: '2025-08-20', price: 229.25 },
-    { date: '2025-08-27', price: 232.00 },
-    { date: '2025-09-03', price: 234.75 },
-    { date: '2025-09-10', price: 237.50 },
-    { date: '2025-09-17', price: 240.25 }
+    { date: '20.08.2025', price: 45670 },
+    { date: '27.08.2025', price: 52340 },
+    { date: '02.09.2025', price: 48920 },
+    { date: '09.09.2025', price: 51230 },
+    { date: '16.09.2025', price: 47890 },
+    { date: '23.09.2025', price: 44560 },
+    { date: '30.09.2025', price: 49780 },
+    { date: '07.10.2025', price: 53120 }
   ],
   'Euronext Corn': [
-    { date: '2025-07-15', price: 195.75 },
-    { date: '2025-07-23', price: 198.25 },
-    { date: '2025-07-30', price: 200.75 },
-    { date: '2025-08-06', price: 203.25 },
-    { date: '2025-08-13', price: 205.75 },
-    { date: '2025-08-20', price: 208.25 },
-    { date: '2025-08-27', price: 210.75 },
-    { date: '2025-09-03', price: 213.25 },
-    { date: '2025-09-10', price: 215.75 },
-    { date: '2025-09-17', price: 218.25 }
+    { date: '20.08.2025', price: 32450 },
+    { date: '27.08.2025', price: 38670 },
+    { date: '02.09.2025', price: 41230 },
+    { date: '09.09.2025', price: 39890 },
+    { date: '16.09.2025', price: 35670 },
+    { date: '23.09.2025', price: 33210 },
+    { date: '30.09.2025', price: 37450 },
+    { date: '07.10.2025', price: 40890 }
   ],
   'Euronext RPS': [
-    { date: '2025-07-15', price: 445.50 },
-    { date: '2025-07-23', price: 448.75 },
-    { date: '2025-07-30', price: 452.00 },
-    { date: '2025-08-06', price: 455.25 },
-    { date: '2025-08-13', price: 458.50 },
-    { date: '2025-08-20', price: 461.75 },
-    { date: '2025-08-27', price: 465.00 },
-    { date: '2025-09-03', price: 468.25 },
-    { date: '2025-09-10', price: 471.50 },
-    { date: '2025-09-17', price: 474.75 }
+    { date: '20.08.2025', price: 23450 },
+    { date: '27.08.2025', price: 28670 },
+    { date: '02.09.2025', price: 31230 },
+    { date: '09.09.2025', price: 29560 },
+    { date: '16.09.2025', price: 26780 },
+    { date: '23.09.2025', price: 24890 },
+    { date: '30.09.2025', price: 27340 },
+    { date: '07.10.2025', price: 30120 }
+  ],
+  'CBOT Soy Oil': [
+    { date: '20.08.2025', price: 15670 },
+    { date: '27.08.2025', price: 18920 },
+    { date: '02.09.2025', price: 21450 },
+    { date: '09.09.2025', price: 19780 },
+    { date: '16.09.2025', price: 17230 },
+    { date: '23.09.2025', price: 15890 },
+    { date: '30.09.2025', price: 18340 },
+    { date: '07.10.2025', price: 20560 }
   ]
 };
 
@@ -696,6 +694,76 @@ export const mockDGAgriData: Record<string, any[]> = {
     { country: 'Turkey', value: 298760, period: '01.07.25-16.09.2025' },
     { country: 'India', value: 187650, period: '01.07.25-16.09.2025' },
   ],
+  'Soybeans Export': [
+    { country: 'Romania', value: 45670, period: '01.07.25-16.09.2025' },
+    { country: 'France', value: 123450, period: '01.07.25-16.09.2025' },
+    { country: 'Italy', value: 87650, period: '01.07.25-16.09.2025' },
+    { country: 'Hungary', value: 56780, period: '01.07.25-16.09.2025' },
+    { country: 'Austria', value: 34560, period: '01.07.25-16.09.2025' },
+  ],
+  'Soybeans Import': [
+    { country: 'Brazil', value: 1834560, period: '01.07.25-16.09.2025' },
+    { country: 'USA', value: 987650, period: '01.07.25-16.09.2025' },
+    { country: 'Argentina', value: 456780, period: '01.07.25-16.09.2025' },
+    { country: 'Ukraine', value: 234560, period: '01.07.25-16.09.2025' },
+    { country: 'Canada', value: 178650, period: '01.07.25-16.09.2025' },
+  ],
+  'Soy Oil Export': [
+    { country: 'Romania', value: 78900, period: '01.07.25-16.09.2025' },
+    { country: 'Netherlands', value: 234560, period: '01.07.25-16.09.2025' },
+    { country: 'Germany', value: 198760, period: '01.07.25-16.09.2025' },
+    { country: 'Belgium', value: 145670, period: '01.07.25-16.09.2025' },
+    { country: 'Poland', value: 98760, period: '01.07.25-16.09.2025' },
+  ],
+  'Soy Oil Import': [
+    { country: 'Argentina', value: 876540, period: '01.07.25-16.09.2025' },
+    { country: 'Brazil', value: 654320, period: '01.07.25-16.09.2025' },
+    { country: 'USA', value: 345670, period: '01.07.25-16.09.2025' },
+    { country: 'Paraguay', value: 198760, period: '01.07.25-16.09.2025' },
+    { country: 'Ukraine', value: 123450, period: '01.07.25-16.09.2025' },
+  ],
+  'RPS Meal Export': [
+    { country: 'Romania', value: 65430, period: '01.07.25-16.09.2025' },
+    { country: 'Germany', value: 187650, period: '01.07.25-16.09.2025' },
+    { country: 'France', value: 156780, period: '01.07.25-16.09.2025' },
+    { country: 'Poland', value: 98760, period: '01.07.25-16.09.2025' },
+    { country: 'Netherlands', value: 76540, period: '01.07.25-16.09.2025' },
+  ],
+  'RPS Meal Import': [
+    { country: 'India', value: 234560, period: '01.07.25-16.09.2025' },
+    { country: 'Canada', value: 198760, period: '01.07.25-16.09.2025' },
+    { country: 'Australia', value: 123450, period: '01.07.25-16.09.2025' },
+    { country: 'Ukraine', value: 87650, period: '01.07.25-16.09.2025' },
+    { country: 'Kazakhstan', value: 56780, period: '01.07.25-16.09.2025' },
+  ],
+  'SFS Meal Export': [
+    { country: 'Romania', value: 98760, period: '01.07.25-16.09.2025' },
+    { country: 'Bulgaria', value: 167890, period: '01.07.25-16.09.2025' },
+    { country: 'Hungary', value: 123450, period: '01.07.25-16.09.2025' },
+    { country: 'France', value: 87650, period: '01.07.25-16.09.2025' },
+    { country: 'Poland', value: 54320, period: '01.07.25-16.09.2025' },
+  ],
+  'SFS Meal Import': [
+    { country: 'Ukraine', value: 345670, period: '01.07.25-16.09.2025' },
+    { country: 'Russia', value: 234560, period: '01.07.25-16.09.2025' },
+    { country: 'Argentina', value: 123450, period: '01.07.25-16.09.2025' },
+    { country: 'Turkey', value: 98760, period: '01.07.25-16.09.2025' },
+    { country: 'Serbia', value: 67890, period: '01.07.25-16.09.2025' },
+  ],
+  'Soy Meal Export': [
+    { country: 'Romania', value: 87650, period: '01.07.25-16.09.2025' },
+    { country: 'Netherlands', value: 298760, period: '01.07.25-16.09.2025' },
+    { country: 'Germany', value: 234560, period: '01.07.25-16.09.2025' },
+    { country: 'Spain', value: 176540, period: '01.07.25-16.09.2025' },
+    { country: 'Italy', value: 123450, period: '01.07.25-16.09.2025' },
+  ],
+  'Soy Meal Import': [
+    { country: 'Argentina', value: 1234560, period: '01.07.25-16.09.2025' },
+    { country: 'Brazil', value: 987650, period: '01.07.25-16.09.2025' },
+    { country: 'USA', value: 567890, period: '01.07.25-16.09.2025' },
+    { country: 'Paraguay', value: 234560, period: '01.07.25-16.09.2025' },
+    { country: 'India', value: 156780, period: '01.07.25-16.09.2025' },
+  ],
 };
 
 // Mock DG AGRI Trade Data (Last Year - for comparison)
@@ -829,6 +897,76 @@ export const mockDGAgriDataLastYear: Record<string, any[]> = {
     { country: 'Ukraine', value: 286120, period: '01.07.24-16.09.2024' },
     { country: 'Canada', value: 68780, period: '01.07.24-16.09.2024' },
     { country: 'Togo', value: 14490, period: '01.07.24-16.09.2024' },
+  ],
+  'Soybeans Export': [
+    { country: 'Romania', value: 40890, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 110560, period: '01.07.24-16.09.2024' },
+    { country: 'Italy', value: 78450, period: '01.07.24-16.09.2024' },
+    { country: 'Hungary', value: 50890, period: '01.07.24-16.09.2024' },
+    { country: 'Austria', value: 30980, period: '01.07.24-16.09.2024' },
+  ],
+  'Soybeans Import': [
+    { country: 'Brazil', value: 1645670, period: '01.07.24-16.09.2024' },
+    { country: 'USA', value: 885430, period: '01.07.24-16.09.2024' },
+    { country: 'Argentina', value: 409340, period: '01.07.24-16.09.2024' },
+    { country: 'Ukraine', value: 210230, period: '01.07.24-16.09.2024' },
+    { country: 'Canada', value: 160120, period: '01.07.24-16.09.2024' },
+  ],
+  'Soy Oil Export': [
+    { country: 'Romania', value: 70670, period: '01.07.24-16.09.2024' },
+    { country: 'Netherlands', value: 210120, period: '01.07.24-16.09.2024' },
+    { country: 'Germany', value: 178010, period: '01.07.24-16.09.2024' },
+    { country: 'Belgium', value: 130560, period: '01.07.24-16.09.2024' },
+    { country: 'Poland', value: 88450, period: '01.07.24-16.09.2024' },
+  ],
+  'Soy Oil Import': [
+    { country: 'Argentina', value: 785670, period: '01.07.24-16.09.2024' },
+    { country: 'Brazil', value: 586780, period: '01.07.24-16.09.2024' },
+    { country: 'USA', value: 309890, period: '01.07.24-16.09.2024' },
+    { country: 'Paraguay', value: 178010, period: '01.07.24-16.09.2024' },
+    { country: 'Ukraine', value: 110560, period: '01.07.24-16.09.2024' },
+  ],
+  'RPS Meal Export': [
+    { country: 'Romania', value: 58670, period: '01.07.24-16.09.2024' },
+    { country: 'Germany', value: 168120, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 140560, period: '01.07.24-16.09.2024' },
+    { country: 'Poland', value: 88450, period: '01.07.24-16.09.2024' },
+    { country: 'Netherlands', value: 68670, period: '01.07.24-16.09.2024' },
+  ],
+  'RPS Meal Import': [
+    { country: 'India', value: 210230, period: '01.07.24-16.09.2024' },
+    { country: 'Canada', value: 178010, period: '01.07.24-16.09.2024' },
+    { country: 'Australia', value: 110560, period: '01.07.24-16.09.2024' },
+    { country: 'Ukraine', value: 78450, period: '01.07.24-16.09.2024' },
+    { country: 'Kazakhstan', value: 50890, period: '01.07.24-16.09.2024' },
+  ],
+  'SFS Meal Export': [
+    { country: 'Romania', value: 88450, period: '01.07.24-16.09.2024' },
+    { country: 'Bulgaria', value: 150340, period: '01.07.24-16.09.2024' },
+    { country: 'Hungary', value: 110560, period: '01.07.24-16.09.2024' },
+    { country: 'France', value: 78450, period: '01.07.24-16.09.2024' },
+    { country: 'Poland', value: 48670, period: '01.07.24-16.09.2024' },
+  ],
+  'SFS Meal Import': [
+    { country: 'Ukraine', value: 309890, period: '01.07.24-16.09.2024' },
+    { country: 'Russia', value: 210230, period: '01.07.24-16.09.2024' },
+    { country: 'Argentina', value: 110560, period: '01.07.24-16.09.2024' },
+    { country: 'Turkey', value: 88450, period: '01.07.24-16.09.2024' },
+    { country: 'Serbia', value: 60890, period: '01.07.24-16.09.2024' },
+  ],
+  'Soy Meal Export': [
+    { country: 'Romania', value: 78450, period: '01.07.24-16.09.2024' },
+    { country: 'Netherlands', value: 267890, period: '01.07.24-16.09.2024' },
+    { country: 'Germany', value: 210230, period: '01.07.24-16.09.2024' },
+    { country: 'Spain', value: 158010, period: '01.07.24-16.09.2024' },
+    { country: 'Italy', value: 110560, period: '01.07.24-16.09.2024' },
+  ],
+  'Soy Meal Import': [
+    { country: 'Argentina', value: 1106780, period: '01.07.24-16.09.2024' },
+    { country: 'Brazil', value: 885430, period: '01.07.24-16.09.2024' },
+    { country: 'USA', value: 509120, period: '01.07.24-16.09.2024' },
+    { country: 'Paraguay', value: 210230, period: '01.07.24-16.09.2024' },
+    { country: 'India', value: 140560, period: '01.07.24-16.09.2024' },
   ],
 };
 

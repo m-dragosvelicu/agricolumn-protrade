@@ -39,11 +39,12 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const commodities = [
-    { id: "wheatBread", name: "WHEAT Panificatie", currency: "EUR", color: "#06b6d4" },
-    { id: "wheatFeed", name: "WHEAT Furaj", currency: "EUR", color: "#8b5cf6" },
-    { id: "barley", name: "Barley", currency: "EUR", color: "#10b981" },
+    { id: "wheatBread", name: "Milling Wheat", currency: "EUR", color: "#06b6d4" },
+    { id: "wheatFeed", name: "Feed Wheat", currency: "EUR", color: "#8b5cf6" },
+    { id: "barley", name: "Feed Barley", currency: "EUR", color: "#10b981" },
     { id: "corn", name: "Corn", currency: "EUR", color: "#f59e0b" },
-    { id: "rapeseed", name: "Rapeseed", currency: "EUR", color: "#ef4444" },
+    { id: "rapeseed", name: "Rapeseeds", currency: "EUR", color: "#ef4444" },
+    { id: "sunflower", name: "Sunflower Seeds", currency: "USD", color: "#3b82f6" },
     { id: "SFS_DAP", name: "SFS DAP", currency: "USD", color: "#3b82f6" },
     { id: "SFS_FOB", name: "SFS FOB", currency: "USD", color: "#8b5cf6" }
   ];
@@ -162,10 +163,15 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-yellow-500" />
-              {selectedCommodityData?.name} Price Chart
+              DAILY PRICES CPT CONSTANTA
             </CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-slate-300">
+                {selectedCommodityData?.name} Price Chart
+              </h3>
+            </div>
             {isLoading ? (
               <div className="h-96 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>

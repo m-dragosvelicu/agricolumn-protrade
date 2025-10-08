@@ -29,6 +29,11 @@ export function DGAgriPanel({ className }: DGAgriPanelProps) {
     { id: 'SUNFLOWER', label: 'Sunflower Seeds', exportKey: 'Sunflower Export', importKey: 'Sunflower Import' },
     { id: 'RAPESEED_OIL', label: 'Rapeseed Oil', exportKey: 'Rapeseed Oil Export', importKey: 'Rapeseed Oil Import' },
     { id: 'SUNFLOWER_OIL', label: 'Sunflower Oil', exportKey: 'Sunflower Oil Export', importKey: 'Sunflower Oil Import' },
+    { id: 'SOYBEANS', label: 'Soybeans', exportKey: 'Soybeans Export', importKey: 'Soybeans Import' },
+    { id: 'SOY_OIL', label: 'Soy Oil', exportKey: 'Soy Oil Export', importKey: 'Soy Oil Import' },
+    { id: 'RPS_MEAL', label: 'RPS Meal', exportKey: 'RPS Meal Export', importKey: 'RPS Meal Import' },
+    { id: 'SFS_MEAL', label: 'SFS Meal', exportKey: 'SFS Meal Export', importKey: 'SFS Meal Import' },
+    { id: 'SOY_MEAL', label: 'Soy Meal', exportKey: 'Soy Meal Export', importKey: 'Soy Meal Import' },
   ];
 
   // Update selected category when trade type or commodity changes
