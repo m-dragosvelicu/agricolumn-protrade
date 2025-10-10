@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -92,17 +93,42 @@ export function DGAgriPanel({ className }: DGAgriPanelProps) {
           </Tabs>
         </div>
 
-        {/* Commodity Tabs */}
+        {/* Commodity Selection */}
         <div className="p-4 border-b border-slate-700/50">
-          <Tabs value={commodity} onValueChange={setCommodity}>
-            <TabsList className="w-full flex flex-wrap gap-2">
-              {commodities.map((comm) => (
-                <TabsTrigger key={comm.id} value={comm.id}>
-                  {comm.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          {/* Mobile: Select Dropdown */}
+          <div className="block md:hidden">
+            <Select value={commodity} onValueChange={setCommodity}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select commodity" />
+              </SelectTrigger>
+              <SelectContent>
+                {commodities.map((comm) => (
+                  <SelectItem key={comm.id} value={comm.id}>
+                    {comm.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop: Scrollable Tabs */}
+          <div className="hidden md:block">
+            <Tabs value={commodity} onValueChange={setCommodity}>
+              <div className="overflow-x-auto">
+                <TabsList className="inline-flex w-auto flex-nowrap gap-2">
+                  {commodities.map((comm) => (
+                    <TabsTrigger
+                      key={comm.id}
+                      value={comm.id}
+                      className="whitespace-nowrap"
+                    >
+                      {comm.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
+            </Tabs>
+          </div>
         </div>
 
         {/* Compare Checkbox */}
@@ -124,7 +150,7 @@ export function DGAgriPanel({ className }: DGAgriPanelProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-auto">
-          <div className="p-4" style={{ height: '400px' }}>
+          <div className="p-4 outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none" style={{ height: '400px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />

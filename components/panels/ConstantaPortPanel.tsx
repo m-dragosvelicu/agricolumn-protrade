@@ -37,6 +37,20 @@ interface ConstantaPortPanelProps {
 type SortField = keyof VesselData;
 type SortDirection = 'asc' | 'desc';
 
+// Fixed commodity order for tabs
+const COMMODITY_ORDER = [
+  { key: 'WHEAT', label: 'WHEAT', dataValues: ['Wheat'] },
+  { key: 'CORN', label: 'CORN', dataValues: ['Corn'] },
+  { key: 'BARLEY', label: 'BARLEY', dataValues: ['Barley'] },
+  { key: 'RPS', label: 'RPS', dataValues: ['Rapeseeds'] },
+  { key: 'SFS', label: 'SFS', dataValues: ['Sunflower Seeds'] },
+  { key: 'RPS_MEAL', label: 'RPS MEAL', dataValues: ['Rapeseeds meal', 'Rapeseeds Meal'] },
+  { key: 'SFS_MEAL', label: 'SFS MEAL', dataValues: ['Sunflower seeds meal', 'Sunflower Seeds Meal'] },
+  { key: 'RPS_OIL', label: 'RPS OIL', dataValues: ['Rapeseeds Oil'] },
+  { key: 'SFS_OIL', label: 'SFS OIL', dataValues: ['Sunflower seeds oil', 'Sunflower Seeds Oil'] },
+  { key: 'FERTILIZERS', label: 'FERTILIZERS', dataValues: ['Fertilizers'] },
+];
+
 // Commodity display mapping
 const getCommodityLabel = (commodity: string): string => {
   const mappings: Record<string, string> = {
@@ -52,6 +66,7 @@ const getCommodityLabel = (commodity: string): string => {
     'Rapeseeds Meal': 'RPS MEAL',
     'Sunflower seeds meal': 'SFS MEAL',
     'Sunflower Seeds Meal': 'SFS MEAL',
+    'Fertilizers': 'FERTILIZERS',
   };
   return mappings[commodity] || commodity.toUpperCase();
 };
@@ -91,9 +106,26 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   const [operationStatusFilter, setOperationStatusFilter] = useState<string[]>([]);
 
   // Chart view states
-  const [selectedChartCommodity, setSelectedChartCommodity] = useState('Wheat');
+  const [selectedChartCommodity, setSelectedChartCommodity] = useState('WHEAT');
   const [selectedDestinationCountries, setSelectedDestinationCountries] = useState<string[]>([]);
   const [countrySearchTerm, setCountrySearchTerm] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Handle responsive chart sizing
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    // Set initial value
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const filteredAndSortedData = useMemo(() => {
     let filtered = data.filter(row => {
@@ -234,7 +266,6 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   };
 
   // Chart data computation
-  const uniqueCommodities = useMemo(() => getUniqueValues('commodity_description'), [data]);
   const uniqueDestinations = useMemo(() => getUniqueValues('destination_country'), [data]);
 
   // Filtered countries based on search
@@ -246,9 +277,13 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   }, [uniqueDestinations, countrySearchTerm]);
 
   const chartData = useMemo(() => {
+    // Find the commodity config for the selected tab
+    const commodityConfig = COMMODITY_ORDER.find(c => c.key === selectedChartCommodity);
+    if (!commodityConfig) return [];
+
     // Filter data by selected commodity and destinations
     const filtered = data.filter(row => {
-      const matchesCommodity = row.commodity_description === selectedChartCommodity;
+      const matchesCommodity = commodityConfig.dataValues.includes(row.commodity_description);
       const matchesDestination = selectedDestinationCountries.length === 0 || selectedDestinationCountries.includes(row.destination_country);
       return matchesCommodity && matchesDestination && row.operation_type === 'Export';
     });
@@ -271,29 +306,54 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   }, [data, selectedChartCommodity, selectedDestinationCountries]);
 
   return (
-    <Card className={cn('flex flex-col bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50', className)}>
+    <Card className={cn('flex flex-col bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 overflow-hidden', className)}>
       <PanelHeader
         title="Constanta Port"
         lastUpdated="2 minutes ago"
         onExport={exportCSV}
         onFullscreen={() => {}}
       />
-      
-      <CardContent className="p-0">
+
+      <CardContent className="p-0 overflow-hidden">
         {/* Chart View */}
         <div className="p-4 border-b border-slate-700/50">
           <h3 className="text-sm font-semibold text-slate-200 mb-3">EXPORT OVERVIEW</h3>
 
-          {/* Commodity Tabs */}
-          <Tabs value={selectedChartCommodity} onValueChange={setSelectedChartCommodity}>
-            <TabsList className="w-full flex flex-wrap gap-2 mb-3">
-              {uniqueCommodities.map((commodity) => (
-                <TabsTrigger key={commodity} value={commodity}>
-                  {getCommodityLabel(commodity)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          {/* Commodity Selection */}
+          {/* Mobile: Select Dropdown */}
+          <div className="block md:hidden mb-3">
+            <Select value={selectedChartCommodity} onValueChange={setSelectedChartCommodity}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select commodity" />
+              </SelectTrigger>
+              <SelectContent>
+                {COMMODITY_ORDER.map((commodity) => (
+                  <SelectItem key={commodity.key} value={commodity.key}>
+                    {commodity.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop: Scrollable Tabs */}
+          <div className="hidden md:block">
+            <Tabs value={selectedChartCommodity} onValueChange={setSelectedChartCommodity}>
+              <div className="overflow-x-auto mb-3">
+                <TabsList className="inline-flex w-auto flex-nowrap gap-2">
+                  {COMMODITY_ORDER.map((commodity) => (
+                    <TabsTrigger
+                      key={commodity.key}
+                      value={commodity.key}
+                      className="whitespace-nowrap"
+                    >
+                      {commodity.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
+            </Tabs>
+          </div>
 
           {/* Destination Country Selector */}
           <div className="mb-4">
@@ -394,20 +454,36 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
           </div>
 
           {/* Chart */}
-          <div style={{ height: '300px' }}>
+          <div className="outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none" style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+              <BarChart
+                data={chartData}
+                margin={{
+                  top: 20,
+                  right: isMobile ? 10 : 30,
+                  left: isMobile ? 0 : 20,
+                  bottom: isMobile ? 60 : 40
+                }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis
                   dataKey="shipper"
-                  fontSize={12}
+                  fontSize={isMobile ? 10 : 12}
                   stroke="#9ca3af"
+                  angle={-45}
+                  textAnchor="end"
+                  height={isMobile ? 80 : 60}
                 />
                 <YAxis
-                  fontSize={12}
+                  fontSize={isMobile ? 10 : 12}
                   tickFormatter={(value) => value.toLocaleString()}
                   stroke="#9ca3af"
-                  label={{ value: 'QTY (tonnes)', angle: -90, position: 'insideLeft', style: { fill: '#9ca3af' } }}
+                  label={{
+                    value: 'QTY (tonnes)',
+                    angle: -90,
+                    position: 'insideLeft',
+                    style: { fill: '#9ca3af', fontSize: isMobile ? 10 : 12 }
+                  }}
                 />
                 <Tooltip
                   formatter={(value: number) => [`${value.toLocaleString()} tonnes`, 'Quantity']}
@@ -416,7 +492,8 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                     backgroundColor: '#1f2937',
                     border: '1px solid #374151',
                     borderRadius: '8px',
-                    color: '#ffffff'
+                    color: '#ffffff',
+                    fontSize: isMobile ? '12px' : '14px'
                   }}
                 />
                 <Bar
@@ -893,15 +970,104 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
           )}
         </div>
 
-        {/* Table */}
-        <div>
+        {/* Mobile Card View */}
+        <div className="md:hidden">
+          <div className="p-4 space-y-3">
+            {paginatedData.map((row) => (
+              <Card key={row.id} className="bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 transition-all duration-200">
+                <CardContent className="p-4 space-y-3">
+                  {/* Header Row */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-white text-base truncate">{row.vessel_name}</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">{getCommodityLabel(row.commodity_description)}</p>
+                    </div>
+                    <Badge className={`border ${getStatusBadge(row.status)} pointer-events-none whitespace-nowrap flex-shrink-0`}>
+                      {row.status}
+                    </Badge>
+                  </div>
+
+                  {/* Info Grid */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Operation</p>
+                      <p className="text-slate-300 font-medium">{row.operation_type}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Terminal</p>
+                      <p className="text-slate-300 font-medium">{row.departure_terminal}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Destination</p>
+                      <p className="text-slate-300 font-medium truncate">{row.destination_country}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Completed</p>
+                      <p className="text-slate-300 font-medium">
+                        {row.operation_completed ? new Date(row.operation_completed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Footer Row */}
+                  <div className="pt-2 border-t border-slate-700/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400">{row.shipper}</span>
+                      <span className="text-slate-500">{row.departure_port}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Mobile Pagination */}
+          <div className="px-4 pb-4 border-t border-slate-700/50">
+            <div className="pt-4 space-y-3">
+              {/* Results info */}
+              <div className="text-xs text-slate-400 text-center">
+                Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, filteredAndSortedData.length)} of {filteredAndSortedData.length}
+              </div>
+              
+              {/* Pagination controls */}
+              <div className="flex items-center justify-between">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="flex-1 mr-2"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <div className="text-sm text-slate-400 px-3 whitespace-nowrap">
+                  {currentPage} / {totalPages}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="flex-1 ml-2"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-b-slate-700/50">
                 {columns.filter(col => visibleColumns[col.key]).map(column => (
                   <TableHead
                     key={column.key}
-                    className="text-slate-400 font-semibold cursor-pointer hover:bg-slate-700/30"
+                    className="text-slate-400 font-semibold cursor-pointer hover:bg-slate-700/30 whitespace-nowrap"
                     onClick={() => handleSort(column.key)}
                   >
                     <div className="flex items-center space-x-1">
@@ -920,7 +1086,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
               {paginatedData.map((row) => (
                 <TableRow key={row.id} className="border-b-slate-800 hover:bg-slate-700/10 transition-colors duration-200">
                   {columns.filter(col => visibleColumns[col.key]).map(column => (
-                    <TableCell key={column.key} className="text-slate-300">
+                    <TableCell key={column.key} className="text-slate-300 whitespace-nowrap">
                       {column.key === 'vessel_name' ? (
                         <span className="font-medium text-white">
                           {row.vessel_name}
@@ -931,6 +1097,8 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                         </Badge>
                       ) : column.key === 'operation_completed' ? (
                         row.operation_completed ? new Date(row.operation_completed).toLocaleDateString() : '—'
+                      ) : column.key === 'commodity_description' ? (
+                        getCommodityLabel(row[column.key] || '')
                       ) : (
                         row[column.key] || '—'
                       )}

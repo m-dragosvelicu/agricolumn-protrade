@@ -433,7 +433,6 @@ export const mockPricesData: Record<string, PriceData[]> = {
   'CORN-CBOT': generateMockPriceData(420, 450),
   'WHEAT-MATIF': generateMockPriceData(240, 270),
   'CORN-MATIF': generateMockPriceData(200, 220),
-  'SFS_DAP': generateMockPriceData(580, 620),
   'SFS_FOB': generateMockPriceData(550, 590),
 };
 
@@ -979,7 +978,6 @@ export const instrumentGroups = {
     { symbol: 'corn', name: 'Porumb (EUR/mt)', type: 'grain', unit: 'EUR/mt' },
   ],
   oilseeds: [
-    { symbol: 'SFS_DAP', name: 'SFS DAP (USD/mt)', type: 'oilseed', unit: 'USD/mt' },
     { symbol: 'SFS_FOB', name: 'SFS FOB (USD/mt)', type: 'oilseed', unit: 'USD/mt' },
     { symbol: 'sunflower', name: 'SFS DAP Constanta (USD/mt)', type: 'oilseed', unit: 'USD/mt' },
     { symbol: 'rapeseed', name: 'RPS (USD/mt)', type: 'oilseed', unit: 'USD/mt' },

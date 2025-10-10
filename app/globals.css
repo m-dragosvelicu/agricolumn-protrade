@@ -127,3 +127,19 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #475569 #1e293b;
 }
+
+/* Remove focus outline from Recharts SVG elements */
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface,
+.recharts-surface *,
+svg[class*="recharts"],
+svg[class*="recharts"] * {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.recharts-wrapper:focus,
+.recharts-surface:focus {
+  outline: none !important;
+}

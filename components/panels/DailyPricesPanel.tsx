@@ -45,7 +45,6 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
     { id: "corn", name: "Corn", currency: "EUR", color: "#f59e0b" },
     { id: "rapeseed", name: "Rapeseeds", currency: "EUR", color: "#ef4444" },
     { id: "sunflower", name: "Sunflower Seeds", currency: "USD", color: "#3b82f6" },
-    { id: "SFS_DAP", name: "SFS DAP", currency: "USD", color: "#3b82f6" },
     { id: "SFS_FOB", name: "SFS FOB", currency: "USD", color: "#8b5cf6" }
   ];
 
@@ -158,7 +157,35 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
+      {/* Commodity Selector - First on mobile, right side on desktop */}
+      <div className="order-1 lg:order-2">
+        <Card className="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50">
+          <CardHeader>
+            <CardTitle className="text-white">Select Commodity</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {commodities.map((commodity) => (
+              <Button
+                key={commodity.id}
+                variant={selectedInstrument === commodity.id ? "default" : "ghost"}
+                className={cn(
+                  "w-full justify-between text-left font-medium transition-all duration-200",
+                  selectedInstrument === commodity.id
+                    ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                )}
+                onClick={() => setSelectedInstrument(commodity.id)}
+              >
+                <span>{commodity.name}</span>
+                <span className="text-sm opacity-75">{commodity.currency}</span>
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Chart - Second on mobile, left side on desktop */}
+      <div className="order-2 lg:order-1 lg:col-span-2">
         <Card className="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
@@ -177,7 +204,7 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
               </div>
             ) : (
-              <div className="h-96">
+              <div className="h-96 outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -233,32 +260,6 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div>
-        <Card className="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50">
-          <CardHeader>
-            <CardTitle className="text-white">Select Commodity</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {commodities.map((commodity) => (
-              <Button
-                key={commodity.id}
-                variant={selectedInstrument === commodity.id ? "default" : "ghost"}
-                className={cn(
-                  "w-full justify-between text-left font-medium transition-all duration-200",
-                  selectedInstrument === commodity.id
-                    ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-                )}
-                onClick={() => setSelectedInstrument(commodity.id)}
-              >
-                <span>{commodity.name}</span>
-                <span className="text-sm opacity-75">{commodity.currency}</span>
-              </Button>
-            ))}
           </CardContent>
         </Card>
       </div>

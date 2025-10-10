@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { mockCOTData } from '@/lib/mockData';
@@ -13,6 +14,16 @@ import { calculateYAxisRange } from '@/lib/chartUtils';
 interface COTPanelProps {
   className?: string;
 }
+
+const COT_COMMODITIES = [
+  { value: 'CBOT Wheat', label: 'CFTC CME WHEAT' },
+  { value: 'CBOT Corn', label: 'CFTC CME CORN' },
+  { value: 'CBOT Soybean', label: 'CFTC CME SOYBEANS' },
+  { value: 'CBOT Soy Oil', label: 'CFTC CME SOY OIL' },
+  { value: 'Euronext Wheat', label: 'COT EUR WHEAT' },
+  { value: 'Euronext Corn', label: 'COT EUR CORN' },
+  { value: 'Euronext RPS', label: 'COT EUR RPS' },
+];
 
 export function COTPanel({ className }: COTPanelProps) {
   const [selectedCommodity, setSelectedCommodity] = useState('CBOT Wheat');
@@ -46,19 +57,42 @@ export function COTPanel({ className }: COTPanelProps) {
         <CardTitle className="text-white">FUNDS NET POSITION</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-0">
-        {/* Commodity Tabs */}
+        {/* Commodity Selection */}
         <div className="p-4 border-b border-slate-700/50">
-          <Tabs value={selectedCommodity} onValueChange={setSelectedCommodity}>
-            <TabsList className="grid w-full grid-cols-7">
-              <TabsTrigger value="CBOT Wheat">CFTC CME WHEAT</TabsTrigger>
-              <TabsTrigger value="CBOT Corn">CFTC CME CORN</TabsTrigger>
-              <TabsTrigger value="CBOT Soybean">CFTC CME SOYBEANS</TabsTrigger>
-              <TabsTrigger value="CBOT Soy Oil">CFTC CME SOY OIL</TabsTrigger>
-              <TabsTrigger value="Euronext Wheat">COT EUR WHEAT</TabsTrigger>
-              <TabsTrigger value="Euronext Corn">COT EUR CORN</TabsTrigger>
-              <TabsTrigger value="Euronext RPS">COT EUR RPS</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* Mobile: Select Dropdown */}
+          <div className="block md:hidden">
+            <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select commodity" />
+              </SelectTrigger>
+              <SelectContent>
+                {COT_COMMODITIES.map((commodity) => (
+                  <SelectItem key={commodity.value} value={commodity.value}>
+                    {commodity.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop: Scrollable Tabs */}
+          <div className="hidden md:block">
+            <Tabs value={selectedCommodity} onValueChange={setSelectedCommodity}>
+              <div className="overflow-x-auto">
+                <TabsList className="inline-flex w-auto flex-nowrap gap-2">
+                  {COT_COMMODITIES.map((commodity) => (
+                    <TabsTrigger
+                      key={commodity.value}
+                      value={commodity.value}
+                      className="whitespace-nowrap"
+                    >
+                      {commodity.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
+            </Tabs>
+          </div>
         </div>
 
 
@@ -66,19 +100,21 @@ export function COTPanel({ className }: COTPanelProps) {
         {/* Removed debug block for production styling */}
 
         {/* Chart */}
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-4 outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none">
           {data.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-muted-foreground">No data available for {selectedCommodity}</p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <div className="outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none" style={{ height: '400px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} />
                 <YAxis
                   stroke="#9ca3af"
                   fontSize={12}
+                  domain={yAxisDomain}
                   tickFormatter={(value) => value.toLocaleString()}
                 />
                 <Tooltip
@@ -126,7 +162,8 @@ export function COTPanel({ className }: COTPanelProps) {
                   }}
                 />
               </LineChart>
-            </ResponsiveContainer>
+              </ResponsiveContainer>
+            </div>
           )}
         </div>
 
