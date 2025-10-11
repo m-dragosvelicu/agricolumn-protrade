@@ -110,9 +110,12 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   const [selectedDestinationCountries, setSelectedDestinationCountries] = useState<string[]>([]);
   const [countrySearchTerm, setCountrySearchTerm] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Handle responsive chart sizing
   useEffect(() => {
+    setIsMounted(true);
+
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640);
     };
@@ -455,55 +458,61 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
 
           {/* Chart */}
           <div className="outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none" style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{
-                  top: 20,
-                  right: isMobile ? 10 : 30,
-                  left: isMobile ? 0 : 20,
-                  bottom: isMobile ? 60 : 40
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis
-                  dataKey="shipper"
-                  fontSize={isMobile ? 10 : 12}
-                  stroke="#9ca3af"
-                  angle={-45}
-                  textAnchor="end"
-                  height={isMobile ? 80 : 60}
-                />
-                <YAxis
-                  fontSize={isMobile ? 10 : 12}
-                  tickFormatter={(value) => value.toLocaleString()}
-                  stroke="#9ca3af"
-                  label={{
-                    value: 'QTY (tonnes)',
-                    angle: -90,
-                    position: 'insideLeft',
-                    style: { fill: '#9ca3af', fontSize: isMobile ? 10 : 12 }
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{
+                    top: 20,
+                    right: isMobile ? 10 : 30,
+                    left: isMobile ? 0 : 20,
+                    bottom: isMobile ? 60 : 40
                   }}
-                />
-                <Tooltip
-                  formatter={(value: number) => [`${value.toLocaleString()} tonnes`, 'Quantity']}
-                  labelFormatter={(label) => `Shipper: ${label}`}
-                  contentStyle={{
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    fontSize: isMobile ? '12px' : '14px'
-                  }}
-                />
-                <Bar
-                  dataKey="quantity"
-                  fill="hsl(var(--primary))"
-                  name="Quantity"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="shipper"
+                    fontSize={isMobile ? 10 : 12}
+                    stroke="#9ca3af"
+                    angle={-45}
+                    textAnchor="end"
+                    height={isMobile ? 80 : 60}
+                  />
+                  <YAxis
+                    fontSize={isMobile ? 10 : 12}
+                    tickFormatter={(value) => value.toLocaleString()}
+                    stroke="#9ca3af"
+                    label={{
+                      value: 'QTY (tonnes)',
+                      angle: -90,
+                      position: 'insideLeft',
+                      style: { fill: '#9ca3af', fontSize: isMobile ? 10 : 12 }
+                    }}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [`${value.toLocaleString()} tonnes`, 'Quantity']}
+                    labelFormatter={(label) => `Shipper: ${label}`}
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      fontSize: isMobile ? '12px' : '14px'
+                    }}
+                  />
+                  <Bar
+                    dataKey="quantity"
+                    fill="hsl(var(--primary))"
+                    name="Quantity"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+              </div>
+            )}
           </div>
         </div>
 

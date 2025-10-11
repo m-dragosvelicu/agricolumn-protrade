@@ -6,13 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Search, Star, TrendingUp, TrendingDown } from 'lucide-react';
+import { LightweightChart } from '@/components/charts/LightweightChart';
 import { mockPricesData, instrumentGroups } from '@/lib/mockData';
 import { ChartInterval } from '@/types';
 import { PanelHeader } from '@/components/layout/DashboardLayout';
 import { cn } from '@/lib/utils';
-import { calculateYAxisRange } from '@/lib/chartUtils';
 
 interface DailyPricesPanelProps {
   className?: string;
@@ -38,13 +37,14 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
   const [favorites, setFavorites] = useState<string[]>(['wheatBread', 'corn']);
   const [isLoading, setIsLoading] = useState(false);
 
+
   const commodities = [
     { id: "wheatBread", name: "Milling Wheat", currency: "EUR", color: "#06b6d4" },
-    { id: "wheatFeed", name: "Feed Wheat", currency: "EUR", color: "#8b5cf6" },
+    { id: "wheatFeed", name: "Feed Wheat", currency: "EUR", color: "#06b6d4" },
     { id: "barley", name: "Feed Barley", currency: "EUR", color: "#10b981" },
     { id: "corn", name: "Corn", currency: "EUR", color: "#f59e0b" },
     { id: "rapeseed", name: "Rapeseeds", currency: "EUR", color: "#ef4444" },
-    { id: "sunflower", name: "Sunflower Seeds", currency: "USD", color: "#3b82f6" },
+    { id: "sunflower", name: "Sunflower Seeds", currency: "USD", color: "#8b5cf6" },
     // { id: "SFS_FOB", name: "SFS FOB", currency: "USD", color: "#8b5cf6" }
   ];
 
@@ -91,28 +91,14 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
     return data.filter(d => new Date(d.date) >= startDate);
   };
 
+  // Get chart data for display
   const chartData = useMemo(() => {
-    if (compareMode && comparedInstruments.length > 0) {
-      const baseData = getFilteredData(selectedInstrument, selectedInterval);
-      const result = baseData.map(item => {
-        const dataPoint: any = { date: item.date, [selectedInstrument]: item.close };
-        comparedInstruments.forEach(symbol => {
-          const compareData = mockPricesData[symbol];
-          const matchingItem = compareData?.find(d => d.date === item.date);
-          if (matchingItem) {
-            dataPoint[symbol] = matchingItem.close;
-          }
-        });
-        return dataPoint;
-      });
-      return result;
-    }
     return getFilteredData(selectedInstrument, selectedInterval).map(item => ({
       date: item.date,
       price: item.close,
       volume: item.volume
     }));
-  }, [selectedInstrument, selectedInterval, compareMode, comparedInstruments]);
+  }, [selectedInstrument, selectedInterval]);
 
   const instrumentData = chartData.filter(item => item.price !== undefined).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const currentPrice = instrumentData.length > 0 ? instrumentData[instrumentData.length - 1].price : 0;
@@ -149,11 +135,6 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
     return "#8b5cf6";
   }, [selectedInstrument, commodities]);
 
-  // Calculate smart Y-axis range with 5% padding
-  const yAxisDomain = useMemo(() => {
-    const range = calculateYAxisRange(chartData, 'price', 0.05);
-    return [range.min, range.max] as [number, number];
-  }, [chartData]);
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -198,50 +179,21 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
               <h3 className="text-sm font-semibold text-slate-300">
                 {selectedCommodityData?.name} Price Chart
               </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Drag to pan • Scroll to zoom • Showing {chartData.length} data points
+              </p>
             </div>
             {isLoading ? (
               <div className="h-96 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
               </div>
             ) : (
-              <div className="h-96 outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis
-                      dataKey="date"
-                      stroke="#9ca3af"
-                      fontSize={12}
-                    />
-                    <YAxis
-                      stroke="#9ca3af"
-                      fontSize={12}
-                      domain={yAxisDomain}
-                      tickFormatter={(value) => `${value.toFixed(0)} ${selectedUnit}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1f2937',
-                        border: '1px solid #374151',
-                        borderRadius: '8px',
-                        color: '#ffffff'
-                      }}
-                      formatter={(value) => [
-                        `${(value as number)?.toFixed(2)} ${selectedUnit}`,
-                        'Price'
-                      ]}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="price"
-                      stroke={selectedColor}
-                      strokeWidth={3}
-                      dot={false}
-                      activeDot={{ r: 6, fill: selectedColor }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              <LightweightChart
+                data={chartData}
+                color={selectedColor}
+                height={384}
+                unit={selectedUnit}
+              />
             )}
 
             {!isLoading && (
