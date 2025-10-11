@@ -45,7 +45,7 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
     { id: "corn", name: "Corn", currency: "EUR", color: "#f59e0b" },
     { id: "rapeseed", name: "Rapeseeds", currency: "EUR", color: "#ef4444" },
     { id: "sunflower", name: "Sunflower Seeds", currency: "USD", color: "#3b82f6" },
-    { id: "SFS_FOB", name: "SFS FOB", currency: "USD", color: "#8b5cf6" }
+    // { id: "SFS_FOB", name: "SFS FOB", currency: "USD", color: "#8b5cf6" }
   ];
 
   const allInstruments = [

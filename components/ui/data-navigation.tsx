@@ -11,7 +11,7 @@ interface DataNavigationProps {
 
 const tabs = [
   { id: 'constanta', label: 'PORT CONSTANTA' },
-  { id: 'daily-prices', label: 'Daily Prices' },
+  { id: 'daily-prices', label: 'DAILY PRICES' },
   { id: 'cot', label: 'COT CFTC' },
   { id: 'dg-agri', label: 'DG AGRI' },
 ];
