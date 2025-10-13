@@ -60,11 +60,15 @@ export interface COTData {
   openInterest?: number;
 }
 
-export interface DGAgriData {
+export interface DGAgriRow {
+  dataset: string;
   country: string;
-  value: number;
   period: string;
-  metric: string;
+  value: number;
+}
+
+export interface DGAgriFile {
+  rows: DGAgriRow[];
 }
 
 export interface FilterState {

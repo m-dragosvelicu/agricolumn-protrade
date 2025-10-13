@@ -1,0 +1,1366 @@
+{
+  "rows": [
+    {
+      "dataset": "Barley Export",
+      "country": "Iran",
+      "period": "01.07.2024-30.06.2025",
+      "value": 76472
+    },
+    {
+      "dataset": "Barley Export",
+      "country": "Jordan",
+      "period": "01.07.2024-30.06.2025",
+      "value": 171565
+    },
+    {
+      "dataset": "Barley Export",
+      "country": "Saudi Arabia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 354922
+    },
+    {
+      "dataset": "Barley Export",
+      "country": "Iran",
+      "period": "01.07.2025-30.06.2026",
+      "value": 156059
+    },
+    {
+      "dataset": "Barley Export",
+      "country": "Jordan",
+      "period": "01.07.2025-30.06.2026",
+      "value": 393352
+    },
+    {
+      "dataset": "Barley Export",
+      "country": "Lebanon",
+      "period": "01.07.2025-30.06.2026",
+      "value": 152510
+    },
+    {
+      "dataset": "Barley Export",
+      "country": "Saudi Arabia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 554426
+    },
+    {
+      "dataset": "Barley Export",
+      "country": "Turkey",
+      "period": "01.07.2025-30.06.2026",
+      "value": 197445
+    },
+    {
+      "dataset": "Barley Import",
+      "country": "Moldova",
+      "period": "01.07.2024-30.06.2025",
+      "value": 75350
+    },
+    {
+      "dataset": "Barley Import",
+      "country": "Serbia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 37104
+    },
+    {
+      "dataset": "Barley Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 168641
+    },
+    {
+      "dataset": "Barley Import",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 67435
+    },
+    {
+      "dataset": "Barley Import",
+      "country": "Moldova",
+      "period": "01.07.2025-30.06.2026",
+      "value": 32035
+    },
+    {
+      "dataset": "Barley Import",
+      "country": "Serbia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 5421
+    },
+    {
+      "dataset": "Barley Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 10426
+    },
+    {
+      "dataset": "Barley Import",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 91539
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "Argentina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 50003
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "Brazil",
+      "period": "01.07.2024-30.06.2025",
+      "value": 949322
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "Canada",
+      "period": "01.07.2024-30.06.2025",
+      "value": 399567
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 1040010
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "United States",
+      "period": "01.07.2024-30.06.2025",
+      "value": 2733083
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "Argentina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 41838
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "Brazil",
+      "period": "01.07.2025-30.06.2026",
+      "value": 2137105
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "Canada",
+      "period": "01.07.2025-30.06.2026",
+      "value": 230798
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 751587
+    },
+    {
+      "dataset": "Corn Import",
+      "country": "United States",
+      "period": "01.07.2025-30.06.2026",
+      "value": 706323
+    },
+    {
+      "dataset": "EU Grains Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 540
+    },
+    {
+      "dataset": "EU Grains Export",
+      "country": "Lebanon",
+      "period": "01.07.2024-30.06.2025",
+      "value": 5712
+    },
+    {
+      "dataset": "EU Grains Export",
+      "country": "Switzerland",
+      "period": "01.07.2024-30.06.2025",
+      "value": 55325
+    },
+    {
+      "dataset": "EU Grains Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 190887
+    },
+    {
+      "dataset": "EU Grains Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 8114
+    },
+    {
+      "dataset": "EU Grains Export",
+      "country": "Israel",
+      "period": "01.07.2025-30.06.2026",
+      "value": 12861
+    },
+    {
+      "dataset": "EU Grains Export",
+      "country": "Lebanon",
+      "period": "01.07.2025-30.06.2026",
+      "value": 66495
+    },
+    {
+      "dataset": "EU Grains Export",
+      "country": "Switzerland",
+      "period": "01.07.2025-30.06.2026",
+      "value": 21507
+    },
+    {
+      "dataset": "EU Grains Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 13983
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "Jordan",
+      "period": "01.07.2024-30.06.2025",
+      "value": 160893
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "Morocco",
+      "period": "01.07.2024-30.06.2025",
+      "value": 489464
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "Nigeria",
+      "period": "01.07.2024-30.06.2025",
+      "value": 968618
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "Saudi Arabia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 327735
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "South Africa",
+      "period": "01.07.2024-30.06.2025",
+      "value": 691683
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "Jordan",
+      "period": "01.07.2025-30.06.2026",
+      "value": 328175
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "Morocco",
+      "period": "01.07.2025-30.06.2026",
+      "value": 471949
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "Nigeria",
+      "period": "01.07.2025-30.06.2026",
+      "value": 334942
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "Saudi Arabia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 637535
+    },
+    {
+      "dataset": "EU Wheat Export",
+      "country": "South Africa",
+      "period": "01.07.2025-30.06.2026",
+      "value": 259326
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "Israel",
+      "period": "01.07.2024-30.06.2025",
+      "value": 31389
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "Morocco",
+      "period": "01.07.2024-30.06.2025",
+      "value": 0
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "Norway",
+      "period": "01.07.2024-30.06.2025",
+      "value": 53081
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "Switzerland",
+      "period": "01.07.2024-30.06.2025",
+      "value": 30482
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 56209
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "Israel",
+      "period": "01.07.2025-30.06.2026",
+      "value": 38291
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "Morocco",
+      "period": "01.07.2025-30.06.2026",
+      "value": 11983
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "Norway",
+      "period": "01.07.2025-30.06.2026",
+      "value": 45678
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "Switzerland",
+      "period": "01.07.2025-30.06.2026",
+      "value": 26579
+    },
+    {
+      "dataset": "RPS Meal Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 22988
+    },
+    {
+      "dataset": "RPS Meal Import",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 5337
+    },
+    {
+      "dataset": "RPS Meal Import",
+      "country": "Canada",
+      "period": "01.07.2024-30.06.2025",
+      "value": 0
+    },
+    {
+      "dataset": "RPS Meal Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 101354
+    },
+    {
+      "dataset": "RPS Meal Import",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 4738
+    },
+    {
+      "dataset": "RPS Meal Import",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 5658
+    },
+    {
+      "dataset": "RPS Meal Import",
+      "country": "Canada",
+      "period": "01.07.2025-30.06.2026",
+      "value": 130057
+    },
+    {
+      "dataset": "RPS Meal Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 43906
+    },
+    {
+      "dataset": "RPS Meal Import",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 25475
+    },
+    {
+      "dataset": "Rapeseed Export",
+      "country": "Norway",
+      "period": "01.07.2024-30.06.2025",
+      "value": 936
+    },
+    {
+      "dataset": "Rapeseed Export",
+      "country": "Switzerland",
+      "period": "01.07.2024-30.06.2025",
+      "value": 658
+    },
+    {
+      "dataset": "Rapeseed Export",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 2247
+    },
+    {
+      "dataset": "Rapeseed Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 136519
+    },
+    {
+      "dataset": "Rapeseed Export",
+      "country": "Norway",
+      "period": "01.07.2025-30.06.2026",
+      "value": 1715
+    },
+    {
+      "dataset": "Rapeseed Export",
+      "country": "Pakistan",
+      "period": "01.07.2025-30.06.2026",
+      "value": 98322
+    },
+    {
+      "dataset": "Rapeseed Export",
+      "country": "Switzerland",
+      "period": "01.07.2025-30.06.2026",
+      "value": 3979
+    },
+    {
+      "dataset": "Rapeseed Export",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 1287
+    },
+    {
+      "dataset": "Rapeseed Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 134036
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "Australia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 351798
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "Moldova",
+      "period": "01.07.2024-30.06.2025",
+      "value": 57095
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "Serbia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 29705
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 1003820
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 6316
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "Australia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 136966
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "Moldova",
+      "period": "01.07.2025-30.06.2026",
+      "value": 197344
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "Serbia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 86156
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 591052
+    },
+    {
+      "dataset": "Rapeseed Import",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 9172
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "Israel",
+      "period": "01.07.2024-30.06.2025",
+      "value": 11739
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "Norway",
+      "period": "01.07.2024-30.06.2025",
+      "value": 75047
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "South Korea",
+      "period": "01.07.2024-30.06.2025",
+      "value": 338
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "Switzerland",
+      "period": "01.07.2024-30.06.2025",
+      "value": 3498
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 59804
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "Israel",
+      "period": "01.07.2025-30.06.2026",
+      "value": 17649
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "Norway",
+      "period": "01.07.2025-30.06.2026",
+      "value": 60891
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "South Korea",
+      "period": "01.07.2025-30.06.2026",
+      "value": 7112
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "Switzerland",
+      "period": "01.07.2025-30.06.2026",
+      "value": 3440
+    },
+    {
+      "dataset": "Rapeseed Oil Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 37235
+    },
+    {
+      "dataset": "Rapeseed Oil Import",
+      "country": "Serbia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 4260
+    },
+    {
+      "dataset": "Rapeseed Oil Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 65366
+    },
+    {
+      "dataset": "Rapeseed Oil Import",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 10328
+    },
+    {
+      "dataset": "Rapeseed Oil Import",
+      "country": "Kenya",
+      "period": "01.07.2025-30.06.2026",
+      "value": 9429
+    },
+    {
+      "dataset": "Rapeseed Oil Import",
+      "country": "Serbia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 5613
+    },
+    {
+      "dataset": "Rapeseed Oil Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 38189
+    },
+    {
+      "dataset": "Rapeseed Oil Import",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 5804
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 4998
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "Israel",
+      "period": "01.07.2024-30.06.2025",
+      "value": 5284
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "Morocco",
+      "period": "01.07.2024-30.06.2025",
+      "value": 34706
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "Norway",
+      "period": "01.07.2024-30.06.2025",
+      "value": 19452
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 15654
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 3299
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "Israel",
+      "period": "01.07.2025-30.06.2026",
+      "value": 11306
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "Morocco",
+      "period": "01.07.2025-30.06.2026",
+      "value": 27682
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "Norway",
+      "period": "01.07.2025-30.06.2026",
+      "value": 16605
+    },
+    {
+      "dataset": "SFS Meal Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 10602
+    },
+    {
+      "dataset": "SFS Meal Import",
+      "country": "Argentina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 216727
+    },
+    {
+      "dataset": "SFS Meal Import",
+      "country": "Kazakhstan",
+      "period": "01.07.2024-30.06.2025",
+      "value": 17927
+    },
+    {
+      "dataset": "SFS Meal Import",
+      "country": "Serbia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 12787
+    },
+    {
+      "dataset": "SFS Meal Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 260784
+    },
+    {
+      "dataset": "SFS Meal Import",
+      "country": "Argentina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 261350
+    },
+    {
+      "dataset": "SFS Meal Import",
+      "country": "Kazakhstan",
+      "period": "01.07.2025-30.06.2026",
+      "value": 31917
+    },
+    {
+      "dataset": "SFS Meal Import",
+      "country": "Serbia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 13274
+    },
+    {
+      "dataset": "SFS Meal Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 107737
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "Iceland",
+      "period": "01.07.2024-30.06.2025",
+      "value": 3581
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "Kosovo",
+      "period": "01.07.2024-30.06.2025",
+      "value": 4397
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "North Macedonia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 8791
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "Switzerland",
+      "period": "01.07.2024-30.06.2025",
+      "value": 22478
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 65694
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "Iceland",
+      "period": "01.07.2025-30.06.2026",
+      "value": 3558
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "Kosovo",
+      "period": "01.07.2025-30.06.2026",
+      "value": 6680
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "North Macedonia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 9583
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "Switzerland",
+      "period": "01.07.2025-30.06.2026",
+      "value": 31051
+    },
+    {
+      "dataset": "Soy Meal Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 37708
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "Argentina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 1829362
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "Brazil",
+      "period": "01.07.2024-30.06.2025",
+      "value": 2403228
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "India",
+      "period": "01.07.2024-30.06.2025",
+      "value": 66449
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "Paraguay",
+      "period": "01.07.2024-30.06.2025",
+      "value": 128133
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 114033
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "Argentina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 1526282
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "Brazil",
+      "period": "01.07.2025-30.06.2026",
+      "value": 2652723
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "India",
+      "period": "01.07.2025-30.06.2026",
+      "value": 105447
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "Paraguay",
+      "period": "01.07.2025-30.06.2026",
+      "value": 69245
+    },
+    {
+      "dataset": "Soy Meal Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 227975
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "Egypt",
+      "period": "01.07.2024-30.06.2025",
+      "value": 0
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "Morocco",
+      "period": "01.07.2024-30.06.2025",
+      "value": 86984
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "South Korea",
+      "period": "01.07.2024-30.06.2025",
+      "value": 6314
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "Trinidad and Tobago",
+      "period": "01.07.2024-30.06.2025",
+      "value": 3060
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 31903
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "Egypt",
+      "period": "01.07.2025-30.06.2026",
+      "value": 5152
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "Morocco",
+      "period": "01.07.2025-30.06.2026",
+      "value": 39127
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "South Korea",
+      "period": "01.07.2025-30.06.2026",
+      "value": 5617
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "Trinidad and Tobago",
+      "period": "01.07.2025-30.06.2026",
+      "value": 3189
+    },
+    {
+      "dataset": "Soy Oil Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 36161
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Argentina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 0
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Norway",
+      "period": "01.07.2024-30.06.2025",
+      "value": 20758
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Paraguay",
+      "period": "01.07.2024-30.06.2025",
+      "value": 111
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Turkey",
+      "period": "01.07.2024-30.06.2025",
+      "value": 0
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 8004
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Argentina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 48763
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Norway",
+      "period": "01.07.2025-30.06.2026",
+      "value": 11290
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Paraguay",
+      "period": "01.07.2025-30.06.2026",
+      "value": 9195
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Turkey",
+      "period": "01.07.2025-30.06.2026",
+      "value": 11235
+    },
+    {
+      "dataset": "Soy Oil Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 104858
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "Belarus",
+      "period": "01.07.2024-30.06.2025",
+      "value": 1860
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 4019
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "Serbia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 51974
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "Switzerland",
+      "period": "01.07.2024-30.06.2025",
+      "value": 2547
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 2064
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "Belarus",
+      "period": "01.07.2025-30.06.2026",
+      "value": 1660
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 2622
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "Serbia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 18302
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "Switzerland",
+      "period": "01.07.2025-30.06.2026",
+      "value": 1758
+    },
+    {
+      "dataset": "Soybeans Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 2331
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "Brazil",
+      "period": "01.07.2024-30.06.2025",
+      "value": 2149425
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "Canada",
+      "period": "01.07.2024-30.06.2025",
+      "value": 83152
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "Togo",
+      "period": "01.07.2024-30.06.2025",
+      "value": 14599
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 238051
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "United States",
+      "period": "01.07.2024-30.06.2025",
+      "value": 908573
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "Brazil",
+      "period": "01.07.2025-30.06.2026",
+      "value": 1849649
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "Canada",
+      "period": "01.07.2025-30.06.2026",
+      "value": 88216
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "Togo",
+      "period": "01.07.2025-30.06.2026",
+      "value": 17345
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 345175
+    },
+    {
+      "dataset": "Soybeans Import",
+      "country": "United States",
+      "period": "01.07.2025-30.06.2026",
+      "value": 970695
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 15843
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "Norway",
+      "period": "01.07.2024-30.06.2025",
+      "value": 2575
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "Turkey",
+      "period": "01.07.2024-30.06.2025",
+      "value": 5557
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 11071
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "United States",
+      "period": "01.07.2024-30.06.2025",
+      "value": 10829
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 15362
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "Norway",
+      "period": "01.07.2025-30.06.2026",
+      "value": 3797
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "Turkey",
+      "period": "01.07.2025-30.06.2026",
+      "value": 116941
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 9840
+    },
+    {
+      "dataset": "Sunflower Export",
+      "country": "United States",
+      "period": "01.07.2025-30.06.2026",
+      "value": 9725
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "Argentina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 1938
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "China",
+      "period": "01.07.2024-30.06.2025",
+      "value": 14915
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "Moldova",
+      "period": "01.07.2024-30.06.2025",
+      "value": 67447
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "Serbia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 24075
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "Turkey",
+      "period": "01.07.2024-30.06.2025",
+      "value": 4891
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "Argentina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 1561
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "China",
+      "period": "01.07.2025-30.06.2026",
+      "value": 12201
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "Moldova",
+      "period": "01.07.2025-30.06.2026",
+      "value": 48225
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "Serbia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 12830
+    },
+    {
+      "dataset": "Sunflower Import",
+      "country": "Turkey",
+      "period": "01.07.2025-30.06.2026",
+      "value": 5363
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 8677
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "Morocco",
+      "period": "01.07.2024-30.06.2025",
+      "value": 2815
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "Turkey",
+      "period": "01.07.2024-30.06.2025",
+      "value": 6697
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "United Kingdom",
+      "period": "01.07.2024-30.06.2025",
+      "value": 37486
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "United States",
+      "period": "01.07.2024-30.06.2025",
+      "value": 14498
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 7341
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "Morocco",
+      "period": "01.07.2025-30.06.2026",
+      "value": 7376
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "Turkey",
+      "period": "01.07.2025-30.06.2026",
+      "value": 7235
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "United Kingdom",
+      "period": "01.07.2025-30.06.2026",
+      "value": 31096
+    },
+    {
+      "dataset": "Sunflower Oil Export",
+      "country": "United States",
+      "period": "01.07.2025-30.06.2026",
+      "value": 5992
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Argentina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 854
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2024-30.06.2025",
+      "value": 3844
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Mexico",
+      "period": "01.07.2024-30.06.2025",
+      "value": 26
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Serbia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 19511
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 505007
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Argentina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 3089
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Bosnia and Herzegovina",
+      "period": "01.07.2025-30.06.2026",
+      "value": 2285516
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Mexico",
+      "period": "01.07.2025-30.06.2026",
+      "value": 2331
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Serbia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 10821
+    },
+    {
+      "dataset": "Sunflower Oil Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 382201
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "Canada",
+      "period": "01.07.2024-30.06.2025",
+      "value": 190452
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "Moldova",
+      "period": "01.07.2024-30.06.2025",
+      "value": 229038
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "Serbia",
+      "period": "01.07.2024-30.06.2025",
+      "value": 108065
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "Ukraine",
+      "period": "01.07.2024-30.06.2025",
+      "value": 1740610
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "United States",
+      "period": "01.07.2024-30.06.2025",
+      "value": 125750
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "Canada",
+      "period": "01.07.2025-30.06.2026",
+      "value": 469559
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "Moldova",
+      "period": "01.07.2025-30.06.2026",
+      "value": 216280
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "Serbia",
+      "period": "01.07.2025-30.06.2026",
+      "value": 185408
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "Ukraine",
+      "period": "01.07.2025-30.06.2026",
+      "value": 330548
+    },
+    {
+      "dataset": "Wheat Import",
+      "country": "United States",
+      "period": "01.07.2025-30.06.2026",
+      "value": 25541
+    }
+  ]
+}

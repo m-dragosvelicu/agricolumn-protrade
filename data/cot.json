@@ -1,0 +1,247 @@
+[
+  {
+    "instrument": "CBOT Wheat",
+    "date": "23.09.2025",
+    "price": -148239
+  },
+  {
+    "instrument": "CBOT Wheat",
+    "date": "16.09.2025",
+    "price": -145359
+  },
+  {
+    "instrument": "CBOT Wheat",
+    "date": "09.09.2025",
+    "price": -145419
+  },
+  {
+    "instrument": "CBOT Wheat",
+    "date": "02.09.2025",
+    "price": -136624
+  },
+  {
+    "instrument": "CBOT Wheat",
+    "date": "27.08.2025",
+    "price": -130268
+  },
+  {
+    "instrument": "CBOT Wheat",
+    "date": "20.08.2025",
+    "price": -149512
+  },
+  {
+    "instrument": "CBOT Wheat",
+    "date": "13.08.2025",
+    "price": -139850
+  },
+  {
+    "instrument": "CBOT Corn",
+    "date": "23.09.2025",
+    "price": -94675
+  },
+  {
+    "instrument": "CBOT Corn",
+    "date": "16.09.2025",
+    "price": -79634
+  },
+  {
+    "instrument": "CBOT Corn",
+    "date": "09.09.2025",
+    "price": -99929
+  },
+  {
+    "instrument": "CBOT Corn",
+    "date": "02.09.2025",
+    "price": -91487
+  },
+  {
+    "instrument": "CBOT Corn",
+    "date": "27.08.2025",
+    "price": -110686
+  },
+  {
+    "instrument": "CBOT Corn",
+    "date": "20.08.2025",
+    "price": -144650
+  },
+  {
+    "instrument": "CBOT Corn",
+    "date": "13.08.2025",
+    "price": -176114
+  },
+  {
+    "instrument": "CBOT Soybean",
+    "date": "23.09.2025",
+    "price": -29302
+  },
+  {
+    "instrument": "CBOT Soybean",
+    "date": "16.09.2025",
+    "price": 2287
+  },
+  {
+    "instrument": "CBOT Soybean",
+    "date": "09.09.2025",
+    "price": -14714
+  },
+  {
+    "instrument": "CBOT Soybean",
+    "date": "02.09.2025",
+    "price": 11964
+  },
+  {
+    "instrument": "CBOT Soybean",
+    "date": "27.08.2025",
+    "price": 20818
+  },
+  {
+    "instrument": "CBOT Soybean",
+    "date": "20.08.2025",
+    "price": 3
+  },
+  {
+    "instrument": "CBOT Soybean",
+    "date": "13.08.2025",
+    "price": -35270
+  },
+  {
+    "instrument": "Euronext Wheat",
+    "date": "24.09.2025",
+    "price": -246411
+  },
+  {
+    "instrument": "Euronext Wheat",
+    "date": "17.09.2025",
+    "price": -299027
+  },
+  {
+    "instrument": "Euronext Wheat",
+    "date": "10.09.2025",
+    "price": -286879
+  },
+  {
+    "instrument": "Euronext Wheat",
+    "date": "03.09.2025",
+    "price": -275067
+  },
+  {
+    "instrument": "Euronext Wheat",
+    "date": "27.08.2025",
+    "price": -270492
+  },
+  {
+    "instrument": "Euronext Wheat",
+    "date": "20.08.2025",
+    "price": -276264
+  },
+  {
+    "instrument": "Euronext Wheat",
+    "date": "13.08.2025",
+    "price": -267888
+  },
+  {
+    "instrument": "Euronext Corn",
+    "date": "24.09.2025",
+    "price": -10004
+  },
+  {
+    "instrument": "Euronext Corn",
+    "date": "17.09.2025",
+    "price": -11847
+  },
+  {
+    "instrument": "Euronext Corn",
+    "date": "10.09.2025",
+    "price": -11329
+  },
+  {
+    "instrument": "Euronext Corn",
+    "date": "03.09.2025",
+    "price": -11400
+  },
+  {
+    "instrument": "Euronext Corn",
+    "date": "27.08.2025",
+    "price": -11463
+  },
+  {
+    "instrument": "Euronext Corn",
+    "date": "20.08.2025",
+    "price": -10691
+  },
+  {
+    "instrument": "Euronext Corn",
+    "date": "13.08.2025",
+    "price": -9246
+  },
+  {
+    "instrument": "Euronext RPS",
+    "date": "24.09.2025",
+    "price": -9210
+  },
+  {
+    "instrument": "Euronext RPS",
+    "date": "17.09.2025",
+    "price": -17240
+  },
+  {
+    "instrument": "Euronext RPS",
+    "date": "10.09.2025",
+    "price": -22846
+  },
+  {
+    "instrument": "Euronext RPS",
+    "date": "03.09.2025",
+    "price": -16395
+  },
+  {
+    "instrument": "Euronext RPS",
+    "date": "27.08.2025",
+    "price": -9693
+  },
+  {
+    "instrument": "Euronext RPS",
+    "date": "20.08.2025",
+    "price": 1891
+  },
+  {
+    "instrument": "Euronext RPS",
+    "date": "13.08.2025",
+    "price": -2932
+  },
+  {
+    "instrument": "CBOT Soy Oil",
+    "date": "24.09.2025",
+    "price": -898
+  },
+  {
+    "instrument": "CBOT Soy Oil",
+    "date": "17.09.2025",
+    "price": 21388
+  },
+  {
+    "instrument": "CBOT Soy Oil",
+    "date": "10.09.2025",
+    "price": 3662
+  },
+  {
+    "instrument": "CBOT Soy Oil",
+    "date": "03.09.2025",
+    "price": 16127
+  },
+  {
+    "instrument": "CBOT Soy Oil",
+    "date": "27.08.2025",
+    "price": 31342
+  },
+  {
+    "instrument": "CBOT Soy Oil",
+    "date": "20.08.2025",
+    "price": 44412
+  },
+  {
+    "instrument": "CBOT Soy Oil",
+    "date": "13.08.2025",
+    "price": 54939
+  }
+]
