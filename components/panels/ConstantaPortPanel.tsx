@@ -51,6 +51,31 @@ const COMMODITY_ORDER = [
   { key: 'FERTILIZERS', label: 'FERTILIZERS', dataValues: ['Fertilizers'] },
 ];
 
+const STATUS_ORDER = [
+  'ETA',
+  'Awaiting Berth',
+  'Loading',
+  'Loading/Discharging',
+  'Loaded',
+  'Sailed',
+  'In Transit',
+  'Discharged',
+  'Completed',
+];
+
+const STATUS_STYLES: Record<string, string> = {
+  'eta': 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+  'awaiting berth': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+  'loading': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  'loading/discharging': 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+  'loaded': 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+  'sailed': 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+  'in transit': 'bg-violet-500/20 text-violet-300 border-violet-500/30',
+  'discharged': 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+  'completed': 'bg-green-500/20 text-green-300 border-green-500/30',
+  'delayed': 'bg-red-500/20 text-red-300 border-red-500/30',
+};
+
 // Commodity display mapping
 const getCommodityLabel = (commodity: string): string => {
   const mappings: Record<string, string> = {
@@ -71,6 +96,16 @@ const getCommodityLabel = (commodity: string): string => {
   return mappings[commodity] || commodity.toUpperCase();
 };
 
+const getQuantityLabel = (filter: string): string => {
+  const mappings: Record<string, string> = {
+    '<5000': '< 5,000 mt',
+    '5000-10000': '5,000 - 10,000 mt',
+    '>10000': '> 10,000 mt',
+  };
+
+  return mappings[filter] || 'All quantities';
+};
+
 const columns = [
   { key: 'vessel_name' as SortField, label: 'Vessel Name', visible: true },
   { key: 'status' as SortField, label: 'Status', visible: true },
@@ -81,6 +116,7 @@ const columns = [
   { key: 'operation_type' as SortField, label: 'Operation Type', visible: true },
   { key: 'operation_completed' as SortField, label: 'Completed Date', visible: true },
   { key: 'commodity_description' as SortField, label: 'Commodity', visible: true },
+  { key: 'quantity' as SortField, label: 'Quantity (mt)', visible: true },
   { key: 'shipper' as SortField, label: 'Shipper', visible: true },
   { key: 'cargo_origin_1' as SortField, label: 'Origin 1', visible: false },
   { key: 'cargo_origin_2' as SortField, label: 'Origin 2', visible: false },
@@ -95,7 +131,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
     columns.reduce((acc, col) => ({ ...acc, [col.key]: col.visible }), {} as Record<string, boolean>)
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(50);
   const [commodityFilter, setCommodityFilter] = useState('all');
   const [operationTypeFilter, setOperationTypeFilter] = useState('all');
   const [quantityFilter, setQuantityFilter] = useState('all');
@@ -144,8 +180,17 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
       const matchesTerminal = terminalFilter === 'all' || row.departure_terminal === terminalFilter;
       const matchesOperationStatus = operationStatusFilter.length === 0 || operationStatusFilter.includes(row.status);
 
-      return matchesSearch && matchesCommodity && matchesOperationType && matchesShipper && 
-             matchesDestination && matchesVesselName && matchesTerminal && matchesOperationStatus;
+      // Quantity filter logic
+      const matchesQuantity = quantityFilter === 'all' || (() => {
+        const qty = row.quantity || 0;
+        if (quantityFilter === '<5000') return qty < 5000;
+        if (quantityFilter === '5000-10000') return qty >= 5000 && qty <= 10000;
+        if (quantityFilter === '>10000') return qty > 10000;
+        return true;
+      })();
+
+      return matchesSearch && matchesCommodity && matchesOperationType && matchesShipper &&
+             matchesDestination && matchesVesselName && matchesTerminal && matchesOperationStatus && matchesQuantity;
     });
 
     filtered.sort((a, b) => {
@@ -165,7 +210,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
     });
 
     return filtered;
-  }, [data, searchTerm, sortField, sortDirection, commodityFilter, operationTypeFilter, shipperFilter, destinationFilter, vesselNameFilter, terminalFilter, operationStatusFilter]);
+  }, [data, searchTerm, sortField, sortDirection, commodityFilter, operationTypeFilter, quantityFilter, shipperFilter, destinationFilter, vesselNameFilter, terminalFilter, operationStatusFilter]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -177,7 +222,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   // Reset to first page when filters or search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, commodityFilter, operationTypeFilter, shipperFilter, destinationFilter, vesselNameFilter, terminalFilter, operationStatusFilter]);
+  }, [searchTerm, commodityFilter, operationTypeFilter, quantityFilter, shipperFilter, destinationFilter, vesselNameFilter, terminalFilter, operationStatusFilter]);
 
   // Clamp current page if total pages shrink below current
   useEffect(() => {
@@ -198,19 +243,33 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   };
 
   const getStatusBadge = (status: string) => {
-    const colors = {
-      "Loading": "bg-blue-500/20 text-blue-300 border-blue-500/30",
-      "Loaded": "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-      "In Transit": "bg-purple-500/20 text-purple-300 border-purple-500/30",
-      "Discharged": "bg-orange-500/20 text-orange-300 border-orange-500/30",
-      "Completed": "bg-green-500/20 text-green-300 border-green-500/30"
-    };
-    return colors[status as keyof typeof colors] || "bg-gray-500/20 text-gray-300 border-gray-500/30";
+    const normalized = status?.toLowerCase?.() ?? '';
+    return STATUS_STYLES[normalized] || 'bg-slate-500/20 text-slate-300 border-slate-500/30';
   };
+
+  const statusOptions = useMemo(() => {
+    const uniqueStatuses = new Set<string>();
+    data.forEach((row) => {
+      if (row.status) uniqueStatuses.add(row.status);
+    });
+    operationStatusFilter.forEach((status) => uniqueStatuses.add(status));
+
+    const orderLookup = new Map(STATUS_ORDER.map((status, index) => [status.toLowerCase(), index]));
+
+    return Array.from(uniqueStatuses).sort((a, b) => {
+      const orderA = orderLookup.get(a.toLowerCase()) ?? STATUS_ORDER.length;
+      const orderB = orderLookup.get(b.toLowerCase()) ?? STATUS_ORDER.length;
+      if (orderA === orderB) {
+        return a.localeCompare(b);
+      }
+      return orderA - orderB;
+    });
+  }, [data, operationStatusFilter]);
 
   const clearFilters = () => {
     setCommodityFilter('all');
     setOperationTypeFilter('all');
+    setQuantityFilter('all');
     setShipperFilter('all');
     setDestinationFilter('all');
     setVesselNameFilter('all');
@@ -222,6 +281,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   const activeFiltersCount = 
     (commodityFilter !== 'all' ? 1 : 0) + 
     (operationTypeFilter !== 'all' ? 1 : 0) + 
+    (quantityFilter !== 'all' ? 1 : 0) + 
     (shipperFilter !== 'all' ? 1 : 0) + 
     (destinationFilter !== 'all' ? 1 : 0) + 
     (vesselNameFilter !== 'all' ? 1 : 0) + 
@@ -648,29 +708,33 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                 </PopoverTrigger>
                 <PopoverContent className="w-[200px] p-0" align="start">
                   <div className="p-2 space-y-1">
-                    {['ETA', 'Loading', 'Loaded', 'In Transit', 'Discharged', 'Completed'].map((status) => (
-                      <div
-                        key={status}
-                        className="flex items-center space-x-2 hover:bg-slate-700/30 p-2 rounded transition-colors cursor-pointer"
-                        onClick={() => {
-                          if (operationStatusFilter.includes(status)) {
-                            setOperationStatusFilter(operationStatusFilter.filter(s => s !== status));
-                          } else {
-                            setOperationStatusFilter([...operationStatusFilter, status]);
-                          }
-                        }}
-                      >
-                        <Checkbox
-                          id={`status-${status}`}
-                          checked={operationStatusFilter.includes(status)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="pointer-events-none"
-                        />
-                        <span className="text-sm text-slate-300 flex-1">
-                          {status}
-                        </span>
-                      </div>
-                    ))}
+                    {statusOptions.length > 0 ? (
+                      statusOptions.map((status) => (
+                        <div
+                          key={status}
+                          className="flex items-center space-x-2 hover:bg-slate-700/30 p-2 rounded transition-colors cursor-pointer"
+                          onClick={() => {
+                            if (operationStatusFilter.includes(status)) {
+                              setOperationStatusFilter(operationStatusFilter.filter(s => s !== status));
+                            } else {
+                              setOperationStatusFilter([...operationStatusFilter, status]);
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            id={`status-${status}`}
+                            checked={operationStatusFilter.includes(status)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="pointer-events-none"
+                          />
+                          <span className="text-sm text-slate-300 flex-1">
+                            {status}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="py-2 text-sm text-slate-400 text-center">No status data available</p>
+                    )}
                     {operationStatusFilter.length > 0 && (
                       <div className="pt-2 border-t border-slate-700/50">
                         <Button
@@ -827,24 +891,28 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                   <div>
                     <Label className="text-sm font-medium mb-2 block">Operation Status</Label>
                     <div className="space-y-2 border border-slate-700/50 rounded-md p-3">
-                      {['ETA', 'Loading', 'Loaded', 'In Transit', 'Discharged', 'Completed'].map((status) => (
-                        <div key={status} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`mobile-status-${status}`}
-                            checked={operationStatusFilter.includes(status)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setOperationStatusFilter([...operationStatusFilter, status]);
-                              } else {
-                                setOperationStatusFilter(operationStatusFilter.filter(s => s !== status));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={`mobile-status-${status}`} className="text-sm cursor-pointer">
-                            {status}
-                          </Label>
-                        </div>
-                      ))}
+                      {statusOptions.length > 0 ? (
+                        statusOptions.map((status) => (
+                          <div key={status} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`mobile-status-${status}`}
+                              checked={operationStatusFilter.includes(status)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setOperationStatusFilter([...operationStatusFilter, status]);
+                                } else {
+                                  setOperationStatusFilter(operationStatusFilter.filter(s => s !== status));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`mobile-status-${status}`} className="text-sm cursor-pointer">
+                              {status}
+                            </Label>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-slate-400 text-center">No status data available</p>
+                      )}
                     </div>
                   </div>
 
@@ -927,6 +995,15 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                   />
                 </Badge>
               )}
+              {quantityFilter !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Quantity: {getQuantityLabel(quantityFilter)}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => setQuantityFilter('all')}
+                  />
+                </Badge>
+              )}
               {shipperFilter !== 'all' && (
                 <Badge variant="secondary" className="gap-1">
                   Shipper: {shipperFilter}
@@ -1001,6 +1078,10 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Operation</p>
                       <p className="text-slate-300 font-medium">{row.operation_type}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Quantity</p>
+                      <p className="text-slate-300 font-medium">{row.quantity?.toLocaleString() || '—'} mt</p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Terminal</p>
@@ -1108,6 +1189,8 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                         row.operation_completed ? new Date(row.operation_completed).toLocaleDateString() : '—'
                       ) : column.key === 'commodity_description' ? (
                         getCommodityLabel(row[column.key] || '')
+                      ) : column.key === 'quantity' ? (
+                        <span className="font-medium">{row.quantity?.toLocaleString() || '—'}</span>
                       ) : (
                         row[column.key] || '—'
                       )}
@@ -1130,11 +1213,28 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                       
                       {/* Pagination controls */}
                       <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
+                        {/* Page size selector */}
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-slate-400 whitespace-nowrap">Rows per page:</span>
+                          <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+                            <SelectTrigger className="w-[80px] h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="50">50</SelectItem>
+                              <SelectItem value="100">100</SelectItem>
+                              <SelectItem value="150">150</SelectItem>
+                              <SelectItem value="200">200</SelectItem>
+                              <SelectItem value="250">250</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         {/* Page info */}
                         <div className="text-sm text-slate-400 text-center sm:text-left">
                           Page {currentPage} of {totalPages}
                         </div>
-                        
+
                         {/* Navigation buttons */}
                         <div className="flex items-center justify-center space-x-1">
                           <Button 

@@ -5,12 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/admin/FileUpload';
 import { Download, Upload, Table as TableIcon } from 'lucide-react';
-import { downloadCSV, generateTemplate, parseCSV, validateCSVData, type CSVColumn } from '@/lib/csvUtils';
+import { arrayToCSV, downloadCSV, parseCSV, validateCSVData, type CSVColumn } from '@/lib/csvUtils';
 
 const cotDataColumns: CSVColumn[] = [
   { key: 'instrument', label: 'Instrument', example: 'CBOT Wheat', required: true },
   { key: 'date', label: 'Date', example: '20.08.2025', required: true },
   { key: 'price', label: 'Net Position', example: '-4261', required: true },
+];
+
+const COT_INSTRUMENTS = [
+  'CBOT Wheat',
+  'CBOT Corn',
+  'CBOT Soybean',
+  'Euronext Wheat',
+  'Euronext Corn',
+  'Euronext RPS',
+  'CBOT Soy Oil',
 ];
 
 export default function COTDataAdmin() {
@@ -19,7 +29,13 @@ export default function COTDataAdmin() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleDownloadTemplate = () => {
-    const template = generateTemplate(cotDataColumns);
+    const templateRows = COT_INSTRUMENTS.map((instrument) => ({
+      instrument,
+      date: '',
+      price: '',
+    }));
+
+    const template = arrayToCSV(templateRows, cotDataColumns);
     downloadCSV(template, 'cot-data-template.csv');
   };
 
@@ -75,6 +91,26 @@ export default function COTDataAdmin() {
             Download the COT data template. Instruments: CBOT Wheat, CBOT Corn, CBOT Soybean,
             Euronext Wheat, Euronext Corn, Euronext RPS, CBOT Soy Oil.
           </p>
+          <div className="bg-slate-900/50 border border-slate-700/80 rounded-lg p-4 space-y-3">
+            <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">How to complete the CSV</h3>
+            <ol className="list-decimal list-inside text-sm text-slate-300 space-y-2">
+              <li>The template lists every accepted instrument – keep the instrument labels exactly as provided.</li>
+              <li>Insert a new row for each reporting date and instrument combination. Duplicate the instrument name for additional weeks.</li>
+              <li>Enter the report date using <code className="px-1 py-0.5 bg-slate-800 rounded">DD.MM.YYYY</code>.</li>
+              <li>Fill <span className="font-medium text-white">Net Position</span> as an integer (use minus sign for net short positions).</li>
+              <li>Save the spreadsheet as a comma-separated CSV before uploading.</li>
+            </ol>
+            <div>
+              <p className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-2">Allowed instrument labels</p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-300">
+                {COT_INSTRUMENTS.map((instrument) => (
+                  <li key={instrument} className="bg-slate-800/60 border border-slate-700 rounded px-2 py-1">
+                    {instrument}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
           <Button
             onClick={handleDownloadTemplate}
             className="bg-green-600 hover:bg-green-700"

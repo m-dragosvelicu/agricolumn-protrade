@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/admin/FileUpload';
 import { Download, Upload, Table as TableIcon } from 'lucide-react';
-import { downloadCSV, generateTemplate, parseCSV, validateCSVData, type CSVColumn } from '@/lib/csvUtils';
+import { arrayToCSV, downloadCSV, parseCSV, validateCSVData, type CSVColumn } from '@/lib/csvUtils';
 
 const dgAgriColumns: CSVColumn[] = [
   { key: 'dataset', label: 'Dataset', example: 'EU Wheat Export', required: true },
@@ -14,13 +14,51 @@ const dgAgriColumns: CSVColumn[] = [
   { key: 'period', label: 'Period', example: '01.07.25-16.09.2025', required: true },
 ];
 
+const DG_AGRI_DATASETS = [
+  'EU Wheat Export',
+  'Wheat Import',
+  'Corn Import',
+  'Romania RPS Export',
+  'Romania Export',
+  'EU Grains Export',
+  'EU Corn Export',
+  'Barley Export',
+  'Barley Import',
+  'Soybean Import',
+  'Rapeseed Export',
+  'Rapeseed Import',
+  'Sunflower Export',
+  'Sunflower Import',
+  'Rapeseed Oil Export',
+  'Rapeseed Oil Import',
+  'Sunflower Oil Export',
+  'Sunflower Oil Import',
+  'Soybeans Export',
+  'Soybeans Import',
+  'Soy Oil Export',
+  'Soy Oil Import',
+  'RPS Meal Export',
+  'RPS Meal Import',
+  'SFS Meal Export',
+  'SFS Meal Import',
+  'Soy Meal Export',
+  'Soy Meal Import',
+];
+
 export default function DGAgriAdmin() {
   const [uploadedData, setUploadedData] = useState<any[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleDownloadTemplate = () => {
-    const template = generateTemplate(dgAgriColumns);
+    const templateRows = DG_AGRI_DATASETS.map((dataset) => ({
+      dataset,
+      country: '',
+      value: '',
+      period: '',
+    }));
+
+    const template = arrayToCSV(templateRows, dgAgriColumns);
     downloadCSV(template, 'dg-agri-template.csv');
   };
 
@@ -77,6 +115,26 @@ export default function DGAgriAdmin() {
             Corn Import, Barley Export/Import, Rapeseed Export/Import, Sunflower Export/Import,
             Soybean Export/Import, and meal/oil data.
           </p>
+          <div className="bg-slate-900/50 border border-slate-700/80 rounded-lg p-4 space-y-3">
+            <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">How to complete the CSV</h3>
+            <ol className="list-decimal list-inside text-sm text-slate-300 space-y-2">
+              <li>Download the template – each row already contains the exact dataset label used in the dashboards.</li>
+              <li>Fill in <span className="font-medium text-white">Country</span>, <span className="font-medium text-white">Value (tonnes)</span>, and <span className="font-medium text-white">Period</span> for every dataset row. Keep the dataset label unchanged.</li>
+              <li>Use tonnes as whole numbers (no separators) and date ranges in the format <code className="px-1 py-0.5 bg-slate-800 rounded">DD.MM.YY-DD.MM.YYYY</code>.</li>
+              <li>Add additional rows if DG AGRI provides more countries for a dataset – duplicate the dataset label exactly as listed.</li>
+              <li>Save the file as CSV (comma separated) before uploading.</li>
+            </ol>
+            <div>
+              <p className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-2">Allowed dataset labels</p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-slate-300">
+                {DG_AGRI_DATASETS.map((dataset) => (
+                  <li key={dataset} className="bg-slate-800/60 border border-slate-700 rounded px-2 py-1">
+                    {dataset}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
           <Button
             onClick={handleDownloadTemplate}
             className="bg-green-600 hover:bg-green-700"
