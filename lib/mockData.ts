@@ -5416,7 +5416,21 @@ function buildCOTData(): Record<string, any[]> {
       price: row.price,
     });
   }
+
+  Object.values(data).forEach((entries) => {
+    entries.sort((a, b) => parseCotDate(a.date) - parseCotDate(b.date));
+  });
   return data;
+}
+
+function parseCotDate(date: string): number {
+  if (!date) return 0;
+  const [day, month, year] = date.split('.');
+  if (!day || !month || !year) return 0;
+  const normalizedYear = year.length === 2 ? `20${year}` : year;
+  const iso = `${normalizedYear}-${month}-${day}`;
+  const parsed = Date.parse(iso);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 
