@@ -18,6 +18,7 @@ const portConstantaColumns: CSVColumn[] = [
   { key: 'operation_type', label: 'Operation Type', example: 'Export', required: true },
   { key: 'operation_completed', label: 'Operation Completed', example: '2025-09-12', required: true },
   { key: 'commodity_description', label: 'Commodity', example: 'Wheat', required: true },
+  { key: 'quantity', label: 'Quantity (mt)', example: '45000', required: true },
   { key: 'shipper', label: 'Shipper', example: 'AgriTrans', required: true },
   { key: 'cargo_origin_1', label: 'Cargo Origin 1', example: 'Dolj', required: false },
   { key: 'cargo_origin_2', label: 'Cargo Origin 2', example: 'Teleorman', required: false },

@@ -154,16 +154,9 @@ export function ReportsSection({ className }: ReportsSectionProps) {
                                   <Badge key={tag} variant="outline">{tag}</Badge>
                                 ))}
                               </div>
-                              <div className="prose prose-sm max-w-none">
-                                <p className="text-muted-foreground leading-relaxed mb-4">
-                                  {selectedReport?.summary}
-                                </p>
-                                <div className="mt-4 p-4 bg-muted rounded-lg">
-                                  <p className="text-sm">
-                                    This is where the full article content would be displayed.
-                                    In a real implementation, this would contain the complete
-                                    market analysis, charts, and detailed insights.
-                                  </p>
+                              <div className="prose prose-sm max-w-none dark:prose-invert">
+                                <div className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                                  {selectedReport?.body}
                                 </div>
                               </div>
                             </div>

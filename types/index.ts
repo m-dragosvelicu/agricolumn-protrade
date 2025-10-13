@@ -37,6 +37,7 @@ export interface VesselData {
   operation_type: string;
   operation_completed: string;
   commodity_description: string;
+  quantity: number; // in metric tonnes (mt)
   shipper: string;
   cargo_origin_1: string;
   cargo_origin_2: string;

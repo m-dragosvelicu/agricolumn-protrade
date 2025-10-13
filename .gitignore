@@ -42,3 +42,4 @@ next-env.d.ts
 
 /manual_upload
 /verify_contract
+/dist
