@@ -5435,9 +5435,9 @@ function parseCotDate(date: string): number {
 
 
 const DG_AGRI_EXPORT_DATASETS = [
-  'EU Wheat Export',
+  'Wheat Export',
   'Barley Export',
-  'EU Grains Export',
+  'Corn Export',
   'Rapeseed Export',
   'Sunflower Export',
   'Rapeseed Oil Export',

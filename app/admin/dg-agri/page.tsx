@@ -8,20 +8,19 @@ import { Download, Upload, Table as TableIcon } from 'lucide-react';
 import { arrayToCSV, downloadCSV, parseCSV, validateCSVData, type CSVColumn } from '@/lib/csvUtils';
 
 const dgAgriColumns: CSVColumn[] = [
-  { key: 'dataset', label: 'Dataset', example: 'EU Wheat Export', required: true },
+  { key: 'dataset', label: 'Dataset', example: 'Wheat Export', required: true },
   { key: 'country', label: 'Country', example: 'Romania', required: true },
   { key: 'value', label: 'Value (tonnes)', example: '1978033', required: true },
   { key: 'period', label: 'Period', example: '01.07.25-16.09.2025', required: true },
 ];
 
 const DG_AGRI_DATASETS = [
-  'EU Wheat Export',
+  'Wheat Export',
   'Wheat Import',
   'Corn Import',
   'Romania RPS Export',
   'Romania Export',
-  'EU Grains Export',
-  'EU Corn Export',
+  'Corn Export',
   'Barley Export',
   'Barley Import',
   'Soybean Import',
@@ -111,8 +110,8 @@ export default function DGAgriAdmin() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate-400">
-            Download the DG AGRI template. Datasets include: EU Wheat Export, Wheat Import,
-            Corn Import, Barley Export/Import, Rapeseed Export/Import, Sunflower Export/Import,
+            Download the DG AGRI template. Datasets include: Wheat Export, Wheat Import,
+            Corn Export/Import, Barley Export/Import, Rapeseed Export/Import, Sunflower Export/Import,
             Soybean Export/Import, and meal/oil data.
           </p>
           <div className="bg-slate-900/50 border border-slate-700/80 rounded-lg p-4 space-y-3">

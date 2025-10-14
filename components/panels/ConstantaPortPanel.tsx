@@ -42,12 +42,12 @@ const COMMODITY_ORDER = [
   { key: 'WHEAT', label: 'WHEAT', dataValues: ['Wheat'] },
   { key: 'CORN', label: 'CORN', dataValues: ['Corn'] },
   { key: 'BARLEY', label: 'BARLEY', dataValues: ['Barley'] },
-  { key: 'RPS', label: 'RPS', dataValues: ['Rapeseeds'] },
+  { key: 'RPS', label: 'RPS', dataValues: ['Rapeseed', 'Rapeseeds'] },
   { key: 'SFS', label: 'SFS', dataValues: ['Sunflower Seeds'] },
-  { key: 'RPS_MEAL', label: 'RPS MEAL', dataValues: ['Rapeseeds meal', 'Rapeseeds Meal'] },
-  { key: 'SFS_MEAL', label: 'SFS MEAL', dataValues: ['Sunflower seeds meal', 'Sunflower Seeds Meal'] },
-  { key: 'RPS_OIL', label: 'RPS OIL', dataValues: ['Rapeseeds Oil'] },
-  { key: 'SFS_OIL', label: 'SFS OIL', dataValues: ['Sunflower seeds oil', 'Sunflower Seeds Oil'] },
+  { key: 'RPS_MEAL', label: 'RPS MEAL', dataValues: ['Rapeseed Meal', 'Rapeseeds meal', 'Rapeseeds Meal'] },
+  { key: 'SFS_MEAL', label: 'SFS MEAL', dataValues: ['Sunflower Meal', 'Sunflower seeds meal', 'Sunflower Seeds Meal'] },
+  { key: 'RPS_OIL', label: 'RPS OIL', dataValues: ['Rapeseed Oil', 'Rapeseeds Oil'] },
+  { key: 'SFS_OIL', label: 'SFS OIL', dataValues: ['Sunflower Oil', 'Sunflower seeds oil', 'Sunflower Seeds Oil'] },
   { key: 'FERTILIZERS', label: 'FERTILIZERS', dataValues: ['Fertilizers'] },
 ];
 
@@ -82,13 +82,18 @@ const getCommodityLabel = (commodity: string): string => {
     'Wheat': 'WHEAT',
     'Corn': 'CORN',
     'Barley': 'BARLEY',
+    'Rapeseed': 'RPS',
     'Rapeseeds': 'RPS',
     'Sunflower Seeds': 'SFS',
+    'Rapeseed Oil': 'RPS OIL',
     'Rapeseeds Oil': 'RPS OIL',
+    'Sunflower Oil': 'SFS OIL',
     'Sunflower seeds oil': 'SFS OIL',
     'Sunflower Seeds Oil': 'SFS OIL',
+    'Rapeseed Meal': 'RPS MEAL',
     'Rapeseeds meal': 'RPS MEAL',
     'Rapeseeds Meal': 'RPS MEAL',
+    'Sunflower Meal': 'SFS MEAL',
     'Sunflower seeds meal': 'SFS MEAL',
     'Sunflower Seeds Meal': 'SFS MEAL',
     'Fertilizers': 'FERTILIZERS',
@@ -104,6 +109,26 @@ const getQuantityLabel = (filter: string): string => {
   };
 
   return mappings[filter] || 'All quantities';
+};
+
+const numberFormatter = new Intl.NumberFormat('en-GB');
+
+const formatQuantity = (value: number | null | undefined): string => {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  return numberFormatter.format(value);
+};
+
+const formatOperationDate = (value: string | null | undefined): string => {
+  if (!value) return '—';
+  const parts = value.split('-');
+  if (parts.length === 3) {
+    const [year, month, dayRaw] = parts;
+    const day = dayRaw?.split('T')[0] ?? '';
+    if (year && month && day) {
+      return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+    }
+  }
+  return value;
 };
 
 const columns = [
@@ -347,25 +372,24 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
     // Filter data by selected commodity and destinations
     const filtered = data.filter(row => {
       const matchesCommodity = commodityConfig.dataValues.includes(row.commodity_description);
-      const matchesDestination = selectedDestinationCountries.length === 0 || selectedDestinationCountries.includes(row.destination_country);
-      return matchesCommodity && matchesDestination && row.operation_type === 'Export';
+      const matchesDestination =
+        selectedDestinationCountries.length === 0 || selectedDestinationCountries.includes(row.destination_country);
+      const quantity = typeof row.quantity === 'number' ? row.quantity : Number(row.quantity ?? 0);
+      return matchesCommodity && matchesDestination && row.operation_type === 'Export' && quantity > 0;
     });
 
-    // Group by shipper and sum quantities (mock: use random quantities)
     const shipperData: Record<string, number> = {};
     filtered.forEach(row => {
-      if (!shipperData[row.shipper]) {
-        shipperData[row.shipper] = 0;
-      }
-      // Mock quantity - in real app this would come from data
-      shipperData[row.shipper] += Math.floor(Math.random() * 10000) + 5000;
+      const quantity = typeof row.quantity === 'number' ? row.quantity : Number(row.quantity ?? 0);
+      if (!quantity || Number.isNaN(quantity)) return;
+
+      const shipper = row.shipper?.trim() || 'Unknown';
+      shipperData[shipper] = (shipperData[shipper] || 0) + quantity;
     });
 
-    // Convert to chart format with actual shipper names
-    return Object.entries(shipperData).map(([shipper, qty]) => ({
-      shipper: shipper,
-      quantity: qty,
-    }));
+    return Object.entries(shipperData)
+      .map(([shipper, qty]) => ({ shipper, quantity: qty }))
+      .sort((a, b) => b.quantity - a.quantity);
   }, [data, selectedChartCommodity, selectedDestinationCountries]);
 
   return (
@@ -518,7 +542,15 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
 
           {/* Chart */}
           <div className="outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none" style={{ height: '300px' }}>
-            {isMounted ? (
+            {!isMounted ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+              </div>
+            ) : chartData.length === 0 ? (
+              <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-slate-700 text-sm text-slate-400">
+                No export data available for this selection.
+              </div>
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={chartData}
@@ -540,7 +572,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                   />
                   <YAxis
                     fontSize={isMobile ? 10 : 12}
-                    tickFormatter={(value) => value.toLocaleString()}
+                    tickFormatter={(value) => numberFormatter.format(value)}
                     stroke="#9ca3af"
                     label={{
                       value: 'QTY (tonnes)',
@@ -550,7 +582,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                     }}
                   />
                   <Tooltip
-                    formatter={(value: number) => [`${value.toLocaleString()} tonnes`, 'Quantity']}
+                    formatter={(value: number) => [`${numberFormatter.format(value)} tonnes`, 'Quantity']}
                     labelFormatter={(label) => `Shipper: ${label}`}
                     contentStyle={{
                       backgroundColor: '#1f2937',
@@ -568,10 +600,6 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                   />
                 </BarChart>
               </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
-              </div>
             )}
           </div>
         </div>
@@ -1081,7 +1109,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Quantity</p>
-                      <p className="text-slate-300 font-medium">{row.quantity?.toLocaleString() || '—'} mt</p>
+                      <p className="text-slate-300 font-medium">{formatQuantity(row.quantity)} mt</p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Terminal</p>
@@ -1186,11 +1214,11 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                           {row.status}
                         </Badge>
                       ) : column.key === 'operation_completed' ? (
-                        row.operation_completed ? new Date(row.operation_completed).toLocaleDateString() : '—'
+                        formatOperationDate(row.operation_completed)
                       ) : column.key === 'commodity_description' ? (
                         getCommodityLabel(row[column.key] || '')
                       ) : column.key === 'quantity' ? (
-                        <span className="font-medium">{row.quantity?.toLocaleString() || '—'}</span>
+                        <span className="font-medium">{formatQuantity(row.quantity)}</span>
                       ) : (
                         row[column.key] || '—'
                       )}

@@ -19,13 +19,13 @@ interface DGAgriPanelProps {
 export function DGAgriPanel({ className }: DGAgriPanelProps) {
   const [tradeType, setTradeType] = useState<'Export' | 'Import'>('Export');
   const [commodity, setCommodity] = useState('WHEAT');
-  const [selectedCategory, setSelectedCategory] = useState('EU Wheat Export');
+  const [selectedCategory, setSelectedCategory] = useState('Wheat Export');
   const [compareToLastYear, setCompareToLastYear] = useState(false);
 
   const commodities = [
-    { id: 'WHEAT', label: 'Wheat', exportKey: 'EU Wheat Export', importKey: 'Wheat Import' },
+    { id: 'WHEAT', label: 'Wheat', exportKey: 'Wheat Export', importKey: 'Wheat Import' },
     { id: 'BARLEY', label: 'Barley', exportKey: 'Barley Export', importKey: 'Barley Import' },
-    { id: 'CORN', label: 'Corn', exportKey: 'EU Grains Export', importKey: 'Corn Import' },
+    { id: 'CORN', label: 'Corn', exportKey: 'Corn Export', importKey: 'Corn Import' },
     { id: 'RAPESEED', label: 'Rapeseed', exportKey: 'Rapeseed Export', importKey: 'Rapeseed Import' },
     { id: 'SUNFLOWER', label: 'Sunflower Seeds', exportKey: 'Sunflower Export', importKey: 'Sunflower Import' },
     { id: 'RAPESEED_OIL', label: 'Rapeseed Oil', exportKey: 'Rapeseed Oil Export', importKey: 'Rapeseed Oil Import' },
