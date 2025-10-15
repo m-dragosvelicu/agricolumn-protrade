@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,15 +15,20 @@ interface ReportsSectionProps {
   className?: string;
 }
 
+const AUTOPLAY_DURATION_MS = 7000;
+
 export function ReportsSection({ className }: ReportsSectionProps) {
   const [reports] = useState<Report[]>(mockReports);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const isHoveredRef = useRef(false);
+  const isAutoplayingRef = useRef(false);
 
   // Carousel setup
   const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: false,
+    loop: true,
     align: 'start',
     slidesToScroll: 1,
+    duration: AUTOPLAY_DURATION_MS,
     breakpoints: {
       '(min-width: 768px)': { slidesToScroll: 2 },
       '(min-width: 1024px)': { slidesToScroll: 3 }
@@ -33,13 +38,38 @@ export function ReportsSection({ className }: ReportsSectionProps) {
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
 
+  const pauseAutoplay = useCallback(() => {
+    isAutoplayingRef.current = false;
+  }, []);
+
+  const resumeAutoplay = useCallback(
+    (triggerImmediate: boolean) => {
+      if (!emblaApi || isHoveredRef.current) return;
+      isAutoplayingRef.current = true;
+
+      if (triggerImmediate && emblaApi.internalEngine().scrollBody.settled()) {
+        window.requestAnimationFrame(() => {
+          if (!isAutoplayingRef.current || isHoveredRef.current) return;
+          emblaApi.scrollNext();
+        });
+      }
+    },
+    [emblaApi]
+  );
+
   const scrollPrev = useCallback(() => {
-    if (emblaApi) emblaApi.scrollPrev();
-  }, [emblaApi]);
+    if (!emblaApi) return;
+    pauseAutoplay();
+    emblaApi.scrollPrev();
+    resumeAutoplay(false);
+  }, [emblaApi, pauseAutoplay, resumeAutoplay]);
 
   const scrollNext = useCallback(() => {
-    if (emblaApi) emblaApi.scrollNext();
-  }, [emblaApi]);
+    if (!emblaApi) return;
+    pauseAutoplay();
+    emblaApi.scrollNext();
+    resumeAutoplay(false);
+  }, [emblaApi, pauseAutoplay, resumeAutoplay]);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -58,6 +88,43 @@ export function ReportsSection({ className }: ReportsSectionProps) {
       emblaApi.off('reInit', onSelect);
     };
   }, [emblaApi, onSelect]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const handlePointerDown = () => pauseAutoplay();
+    const handlePointerUp = () => resumeAutoplay(false);
+    const handleSettle = () => {
+      if (!isAutoplayingRef.current || isHoveredRef.current) return;
+      emblaApi.scrollNext();
+    };
+    const handleReInit = () => resumeAutoplay(true);
+
+    resumeAutoplay(true);
+
+    emblaApi.on('pointerDown', handlePointerDown);
+    emblaApi.on('pointerUp', handlePointerUp);
+    emblaApi.on('settle', handleSettle);
+    emblaApi.on('reInit', handleReInit);
+
+    return () => {
+      pauseAutoplay();
+      emblaApi.off('pointerDown', handlePointerDown);
+      emblaApi.off('pointerUp', handlePointerUp);
+      emblaApi.off('settle', handleSettle);
+      emblaApi.off('reInit', handleReInit);
+    };
+  }, [emblaApi, pauseAutoplay, resumeAutoplay]);
+
+  const handleMouseEnter = useCallback(() => {
+    isHoveredRef.current = true;
+    pauseAutoplay();
+  }, [pauseAutoplay]);
+
+  const handleMouseLeave = useCallback(() => {
+    isHoveredRef.current = false;
+    resumeAutoplay(true);
+  }, [resumeAutoplay]);
 
   const formatDate = (dateISO: string) => {
     const date = new Date(dateISO);
@@ -110,12 +177,20 @@ export function ReportsSection({ className }: ReportsSectionProps) {
         </div>
 
         {/* Carousel Container */}
-        <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex gap-6">
+        <div
+          className="overflow-hidden"
+          ref={emblaRef}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="flex -ml-6">
             {commodityTypes.map((commodity) => {
               const report = featuredReports.find(r => r.tags.includes(commodity)) || featuredReports[0];
               return (
-                <div key={commodity} className="flex-[0_0_100%] min-w-0 md:flex-[0_0_calc(50%-12px)] lg:flex-[0_0_calc(33.333%-16px)]">
+                <div
+                  key={commodity}
+                  className="pl-6 flex-[0_0_100%] min-w-0 md:flex-[0_0_calc(50%-1.5rem)] lg:flex-[0_0_calc(33.333%-1.5rem)]"
+                >
                   <Card className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow-lg overflow-hidden h-64 flex flex-col">
                     <CardHeader className="border-b border-slate-700/50 pb-3">
                       <h3 className="text-white font-bold text-lg tracking-wide">{commodity}</h3>
