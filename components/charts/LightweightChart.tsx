@@ -15,11 +15,16 @@ export function LightweightChart({ data, color = '#06b6d4', height = 400, unit =
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
-    if (data.length === 0) return;
+    if (data.length === 0) {
+      setIsLoading(false);
+      return;
+    }
 
     let chart: any = null;
     let handleResize: (() => void) | null = null;
     let isSubscribed = true;
+
+    setIsLoading(true);
 
     // Dynamically import lightweight-charts to ensure it's loaded on client
     import('lightweight-charts').then(({ createChart, ColorType, LineSeries }) => {
@@ -89,13 +94,17 @@ export function LightweightChart({ data, color = '#06b6d4', height = 400, unit =
   }, [data, color, height]);
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative" style={{ minHeight: height }}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
         </div>
       )}
-      <div ref={chartContainerRef} className="w-full" />
+      <div
+        ref={chartContainerRef}
+        className="w-full"
+        style={{ height }}
+      />
     </div>
   );
 }
