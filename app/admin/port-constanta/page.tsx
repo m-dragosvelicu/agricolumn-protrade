@@ -11,8 +11,7 @@ import { downloadCSV, generateTemplate, parseCSV, validateCSVData, type CSVColum
 const portConstantaColumns: CSVColumn[] = [
   { key: 'vessel_name', label: 'Vessel Name', example: 'MV Black Sea', required: true },
   { key: 'status', label: 'Status', example: 'Loading', required: true },
-  { key: 'departure_country', label: 'Departure Country', example: 'Romania', required: true },
-  { key: 'departure_port', label: 'Departure Port', example: 'Constanța', required: true },
+  { key: 'departure_location', label: 'Departure Location', example: 'RO-Constanta', required: true },
   { key: 'departure_terminal', label: 'Departure Terminal', example: 'Terminal 1', required: true },
   { key: 'destination_country', label: 'Destination Country', example: 'Egypt', required: true },
   { key: 'operation_type', label: 'Operation Type', example: 'Export', required: true },

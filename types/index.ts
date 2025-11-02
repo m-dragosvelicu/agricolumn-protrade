@@ -30,8 +30,7 @@ export interface VesselData {
   id: number;
   vessel_name: string;
   status: string;
-  departure_country: string;
-  departure_port: string;
+  departure_location: string; // Format: "CountryCode-Port" (e.g., "RO-Constanta")
   departure_terminal: string;
   destination_country: string;
   operation_type: string;

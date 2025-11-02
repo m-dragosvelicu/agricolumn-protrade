@@ -7,6 +7,7 @@ import { ConstantaPortPanel } from '@/components/panels/ConstantaPortPanel';
 import { DailyPricesPanel } from '@/components/panels/DailyPricesPanel';
 import { COTPanel } from '@/components/panels/COTPanel';
 import { DGAgriPanel } from '@/components/panels/DGAgriPanel';
+import { EUWeeklyTradePanel } from '@/components/panels/EUWeeklyTradePanel';
 import { DataNavigation } from '@/components/ui/data-navigation';
 import { Separator } from '@/components/ui/separator';
 
@@ -22,7 +23,12 @@ export default function Home() {
       case 'cot':
         return <COTPanel />;
       case 'dg-agri':
-        return <DGAgriPanel />;
+        return (
+          <div className="space-y-6">
+            <EUWeeklyTradePanel />
+            <DGAgriPanel />
+          </div>
+        );
       default:
         return <ConstantaPortPanel />;
     }
