@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Star, TrendingUp, TrendingDown } from 'lucide-react';
 import { LightweightChart } from '@/components/charts/LightweightChart';
 import { mockPricesData, instrumentGroups } from '@/lib/mockData';
+import { colorForCommodity } from '@/lib/commodityColors';
 import { ChartInterval } from '@/types';
 import { PanelHeader } from '@/components/layout/DashboardLayout';
 import { cn } from '@/lib/utils';
@@ -39,13 +40,13 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
 
 
   const commodities = [
-    { id: "wheatBread", name: "Milling Wheat", currency: "EUR", color: "#06b6d4" },
-    { id: "wheatFeed", name: "Feed Wheat", currency: "EUR", color: "#06b6d4" },
-    { id: "barley", name: "Feed Barley", currency: "EUR", color: "#10b981" },
-    { id: "corn", name: "Corn", currency: "EUR", color: "#f59e0b" },
-    { id: "rapeseed", name: "Rapeseeds", currency: "EUR", color: "#ef4444" },
-    { id: "sunflower", name: "Sunflower Seeds", currency: "USD", color: "#8b5cf6" },
-    // { id: "SFS_FOB", name: "SFS FOB", currency: "USD", color: "#8b5cf6" }
+    { id: "wheatBread", name: "Milling Wheat", currency: "EUR" },
+    { id: "wheatFeed", name: "Feed Wheat", currency: "EUR" },
+    { id: "barley", name: "Feed Barley", currency: "EUR" },
+    { id: "corn", name: "Corn", currency: "EUR" },
+    { id: "rapeseed", name: "Rapeseeds", currency: "EUR" },
+    { id: "sunflower", name: "Sunflower Seeds", currency: "USD" },
+    // { id: "SFS_FOB", name: "SFS FOB", currency: "USD" }
   ];
 
   const allInstruments = [
@@ -131,8 +132,8 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
   // Derive a safe color to avoid accessing missing property on instrumentGroups entries
   const selectedColor = useMemo(() => {
     const direct = commodities.find(c => c.id === selectedInstrument);
-    if (direct) return direct.color;
-    return "#8b5cf6";
+    if (direct) return colorForCommodity(direct.id);
+    return colorForCommodity(selectedInstrument);
   }, [selectedInstrument, commodities]);
 
   

@@ -4,12 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { mockDGAgriData, mockDGAgriDataLastYear } from '@/lib/mockData';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { mockDGAgriData } from '@/lib/mockData';
 import { PanelHeader } from '@/components/layout/DashboardLayout';
+import { colorForCommodity } from '@/lib/commodityColors';
 import { cn } from '@/lib/utils';
 
 interface DGAgriPanelProps {
@@ -20,7 +19,18 @@ export function DGAgriPanel({ className }: DGAgriPanelProps) {
   const [tradeType, setTradeType] = useState<'Export' | 'Import'>('Export');
   const [commodity, setCommodity] = useState('WHEAT');
   const [selectedCategory, setSelectedCategory] = useState('Wheat Export');
-  const [compareToLastYear, setCompareToLastYear] = useState(false);
+
+  // Base commodity color for selected crop
+  const baseColor = React.useMemo(() => colorForCommodity(commodity), [commodity]);
+
+  const withAlpha = (hex: string, alpha: number) => {
+    const clean = hex.replace('#', '');
+    const r = parseInt(clean.substring(0, 2), 16) || 0;
+    const g = parseInt(clean.substring(2, 4), 16) || 0;
+    const b = parseInt(clean.substring(4, 6), 16) || 0;
+    const a = Math.min(Math.max(alpha, 0), 1);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  };
 
   const commodities = [
     { id: 'WHEAT', label: 'Wheat', exportKey: 'Wheat Export', importKey: 'Wheat Import' },
@@ -47,25 +57,29 @@ export function DGAgriPanel({ className }: DGAgriPanelProps) {
   }, [tradeType, commodity]);
 
   const currentYearData = mockDGAgriData[selectedCategory] || [];
-  const lastYearData = mockDGAgriDataLastYear[selectedCategory] || [];
 
-  // Merge current year and last year data
+  // Simplified chart data - YTD only (no year comparison)
   const chartData = currentYearData.map((current) => {
-    const lastYear = lastYearData.find((ly) => ly.country === current.country);
     return {
       country: current.country,
-      thisYear: current.value,
-      lastYear: lastYear ? lastYear.value : 0,
+      value: current.value,
       period: current.period,
     };
   });
+
+  // Calculate dynamic Y-axis domain for clean display
+  const maxValue = Math.max(...chartData.map(d => d.value), 0);
+
+  // Round maxValue up to nearest 10k, then add exactly 40k buffer
+  const roundedMax = Math.ceil(maxValue / 10000) * 10000;
+  const yAxisMax = roundedMax + 40000;
 
   const categories = Object.keys(mockDGAgriData);
 
   const exportData = () => {
     const csv = [
-      'Country/Item,This Year,Last Year,Period',
-      ...chartData.map(row => `${row.country},${row.thisYear},${row.lastYear},${row.period}`)
+      'Country/Item,Value (Tonnes),Period',
+      ...chartData.map(row => `${row.country},${row.value},${row.period}`)
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -80,7 +94,18 @@ export function DGAgriPanel({ className }: DGAgriPanelProps) {
   return (
     <Card className={cn('h-full flex flex-col bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50', className)}>
       <CardHeader>
-        <CardTitle className="text-white">DG AGRI Trade Data</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-white">DG AGRI Trade Data (YTD)</CardTitle>
+          <span
+            className="text-xs text-slate-400 cursor-help border-b border-dashed border-slate-400"
+            title="Year-to-Date: Cumulative trade volumes for the current marketing year"
+          >
+            ?
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          EU country-level trade volumes for the current marketing year
+        </p>
       </CardHeader>
       <CardContent className="flex-1 p-0">
         {/* Trade Type Tabs */}
@@ -131,23 +156,6 @@ export function DGAgriPanel({ className }: DGAgriPanelProps) {
           </div>
         </div>
 
-        {/* Compare Checkbox */}
-        <div className="px-4 py-3 border-b border-slate-700/50">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="compare-last-year"
-              checked={compareToLastYear}
-              onCheckedChange={(checked) => setCompareToLastYear(!!checked)}
-            />
-            <Label
-              htmlFor="compare-last-year"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-            >
-              Compare to last year
-            </Label>
-          </div>
-        </div>
-
         {/* Content */}
         <div className="flex-1 overflow-auto">
           <div className="p-4 outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none" style={{ height: '400px' }}>
@@ -166,6 +174,7 @@ export function DGAgriPanel({ className }: DGAgriPanelProps) {
                   fontSize={12}
                   tickFormatter={(value) => value.toLocaleString()}
                   stroke="#9ca3af"
+                  domain={[0, yAxisMax]}
                 />
                 <Tooltip
                   formatter={(value: number) => [value.toLocaleString(), 'Tonnes']}
@@ -177,27 +186,13 @@ export function DGAgriPanel({ className }: DGAgriPanelProps) {
                     color: '#ffffff'
                   }}
                 />
-                {compareToLastYear && (
-                  <Legend
-                    wrapperStyle={{ paddingTop: '10px' }}
-                    iconType="square"
-                  />
-                )}
 
                 <Bar
-                  dataKey="thisYear"
-                  fill="#eab308"
-                  name="This Year"
+                  dataKey="value"
+                  fill={baseColor}
+                  name="YTD Volume"
                   radius={[4, 4, 0, 0]}
                 />
-                {compareToLastYear && (
-                  <Bar
-                    dataKey="lastYear"
-                    fill="#6b7280"
-                    name="Last Year"
-                    radius={[4, 4, 0, 0]}
-                  />
-                )}
               </BarChart>
             </ResponsiveContainer>
           </div>

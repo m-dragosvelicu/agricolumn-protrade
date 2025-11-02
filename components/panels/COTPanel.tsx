@@ -10,6 +10,7 @@ import { mockCOTData } from '@/lib/mockData';
 import { PanelHeader } from '@/components/layout/DashboardLayout';
 import { cn } from '@/lib/utils';
 import { calculateYAxisRange } from '@/lib/chartUtils';
+import { colorForCommodity } from '@/lib/commodityColors';
 
 interface COTPanelProps {
   className?: string;
@@ -28,6 +29,7 @@ const COT_COMMODITIES = [
 export function COTPanel({ className }: COTPanelProps) {
   const [selectedCommodity, setSelectedCommodity] = useState('CBOT Wheat');
   const data = mockCOTData[selectedCommodity] || [];
+  const lineColor = useMemo(() => colorForCommodity(selectedCommodity), [selectedCommodity]);
 
   // Calculate smart Y-axis range with 5% padding
   const yAxisDomain = useMemo(() => {
@@ -130,10 +132,10 @@ export function COTPanel({ className }: COTPanelProps) {
                 <Line
                   type="linear"
                   dataKey="price"
-                  stroke="#eab308"
+                  stroke={lineColor}
                   strokeWidth={3}
                   dot={{ r: 0 }}
-                  activeDot={{ r: 5, fill: '#eab308' }}
+                  activeDot={{ r: 5, fill: lineColor }}
                   name={selectedCommodity}
                   label={{
                     position: 'top',
@@ -144,7 +146,7 @@ export function COTPanel({ className }: COTPanelProps) {
                           y={y - 20}
                           width={50}
                           height={16}
-                          fill="#eab308"
+                          fill={lineColor}
                           rx={3}
                         />
                         <text
