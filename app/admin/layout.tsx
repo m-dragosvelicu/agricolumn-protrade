@@ -4,6 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { UserRole } from '@/types/auth';
+import { UserMenu } from '@/components/layout/UserMenu';
 import {
   LayoutDashboard,
   Ship,
@@ -11,7 +14,6 @@ import {
   BarChart3,
   Globe,
   FileText,
-  LogOut
 } from 'lucide-react';
 
 const navigation = [
@@ -28,6 +30,14 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <ProtectedRoute requiredRole={UserRole.ADMIN}>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </ProtectedRoute>
+  );
+}
+
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
@@ -48,10 +58,10 @@ export default function AdminLayout({
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                  'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors',
                   isActive
-                    ? "bg-amber-500 text-white"
-                    : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                    ? 'bg-amber-500 text-white'
+                    : 'text-slate-300 hover:bg-slate-700 hover:text-white',
                 )}
               >
                 <item.icon className="mr-3 h-5 w-5" />
@@ -60,21 +70,17 @@ export default function AdminLayout({
             );
           })}
         </nav>
-
-        {/* User section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
-          <button className="flex items-center w-full px-4 py-3 text-sm font-medium text-slate-300 rounded-lg hover:bg-slate-700 hover:text-white transition-colors">
-            <LogOut className="mr-3 h-5 w-5" />
-            Sign Out
-          </button>
-        </div>
       </div>
 
       {/* Main content */}
       <div className="pl-64">
-        <main className="p-8">
-          {children}
-        </main>
+        {/* Top header with user menu */}
+        <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700">
+          <div className="flex items-center justify-end px-8 py-4">
+            <UserMenu />
+          </div>
+        </header>
+        <main className="p-8">{children}</main>
       </div>
     </div>
   );
