@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Theme } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
 import "./globals.css";
+import { GlobalBanner } from "@/components/ui/global-banner";
+import { AccessGate } from "@/components/auth/AccessGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +32,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Theme>
-          {children}
+          <GlobalBanner />
+          <AccessGate>
+            {children}
+          </AccessGate>
         </Theme>
       </body>
     </html>

@@ -182,6 +182,45 @@ export const mockReports: Report[] = [
     tags: ['EU', 'Prices', 'Weekly'],
     slug: 'dg-agri-weekly-prices',
   },
+  // Added mock reports to reach 10+
+  {
+    id: '5',
+    title: 'Rapeseed Basis Narrows on Crush Demand',
+    summary: 'EU crushers lift bids for nearby rapeseed; basis narrows across Central Europe amid stronger offtake.',
+    body: 'Extended body content here... Mock content describing rapeseed market dynamics, crush margins, and logistics constraints.',
+    dateISO: '2024-03-11T10:00:00Z',
+    tags: ['RAPESEEDS', 'EU', 'Basis'],
+    slug: 'rapeseed-basis-narrows',
+    isRecommended: true,
+  },
+  {
+    id: '6',
+    title: 'Sunflower Seeds: Black Sea Premium Softens',
+    summary: 'Ukrainian sunflower seed premium eases as export pace improves; crushers weigh parity vs. meal/oil spreads.',
+    body: 'Extended body content here... Mock content on sunflower seeds, crusher margins, and export pace.',
+    dateISO: '2024-03-10T08:30:00Z',
+    tags: ['SUNFLOWER SEEDS', 'Black Sea', 'Premium'],
+    slug: 'sunflower-seeds-premium-softens',
+  },
+  {
+    id: '7',
+    title: 'Corn FOB Constanța Steady; Freight Eases',
+    summary: 'Corn FOB indications hold steady as freight softens 3–5 USD/mt on select routes.',
+    body: 'Extended body content here... Mock content on corn FOB quotes, freight updates, and buyer demand windows.',
+    dateISO: '2024-03-09T12:45:00Z',
+    tags: ['CORN', 'Constanta', 'Freight'],
+    slug: 'corn-fob-constanta-steady',
+    isRecommended: true,
+  },
+  {
+    id: '8',
+    title: 'Wheat: Algeria Tender Sets Tone',
+    summary: 'North African tender activity sets the tone for nearby wheat shipments; spreads adjust vs. Euronext.',
+    body: 'Extended body content here... Mock content on tender outcomes, protein premiums, and basis moves.',
+    dateISO: '2024-03-08T07:15:00Z',
+    tags: ['WHEAT', 'Tender', 'North Africa'],
+    slug: 'wheat-algeria-tender-tone',
+  },
 ];
 
 // Mock Constanta Port Data for the legacy table
