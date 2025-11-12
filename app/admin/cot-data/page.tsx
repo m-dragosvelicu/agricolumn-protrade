@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/admin/FileUpload';
 import { Download, Upload, Table as TableIcon } from 'lucide-react';
-import { arrayToCSV, downloadCSV, parseCSV, validateCSVData, type CSVColumn } from '@/lib/csvUtils';
+import { arrayToExcel, downloadExcel, parseExcel, validateExcelData, type ExcelColumn } from '@/lib/excelUtils';
 
-const cotDataColumns: CSVColumn[] = [
+const cotDataColumns: ExcelColumn[] = [
   { key: 'instrument', label: 'Instrument', example: 'CBOT Wheat', required: true },
   { key: 'date', label: 'Date', example: '20.08.2025', required: true },
   { key: 'price', label: 'Net Position', example: '-4261', required: true },
@@ -35,8 +35,8 @@ export default function COTDataAdmin() {
       price: '',
     }));
 
-    const template = arrayToCSV(templateRows, cotDataColumns);
-    downloadCSV(template, 'cot-data-template.csv');
+    const template = arrayToExcel(templateRows, cotDataColumns);
+    downloadExcel(template, 'cot-data-template.xlsx');
   };
 
   const handleFileSelect = async (file: File) => {
@@ -44,10 +44,9 @@ export default function COTDataAdmin() {
     setErrors([]);
 
     try {
-      const text = await file.text();
-      const data = parseCSV(text, cotDataColumns);
+      const data = await parseExcel(file, cotDataColumns);
 
-      const validation = validateCSVData(data, cotDataColumns);
+      const validation = validateExcelData(data, cotDataColumns);
 
       if (!validation.isValid) {
         setErrors(validation.errors);
@@ -56,8 +55,8 @@ export default function COTDataAdmin() {
         setUploadedData(data);
         setErrors([]);
       }
-    } catch (error) {
-      setErrors(['Failed to parse CSV file. Please check the format.']);
+    } catch (error: any) {
+      setErrors([error.message || 'Failed to parse Excel file. Please check the format.']);
       setUploadedData([]);
     } finally {
       setIsProcessing(false);
@@ -92,13 +91,13 @@ export default function COTDataAdmin() {
             Euronext Wheat, Euronext Corn, Euronext RPS, CBOT Soy Oil.
           </p>
           <div className="bg-slate-900/50 border border-slate-700/80 rounded-lg p-4 space-y-3">
-            <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">How to complete the CSV</h3>
+            <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">How to complete the Excel file</h3>
             <ol className="list-decimal list-inside text-sm text-slate-300 space-y-2">
               <li>The template lists every accepted instrument – keep the instrument labels exactly as provided.</li>
               <li>Insert a new row for each reporting date and instrument combination. Duplicate the instrument name for additional weeks.</li>
               <li>Enter the report date using <code className="px-1 py-0.5 bg-slate-800 rounded">DD.MM.YYYY</code>.</li>
               <li>Fill <span className="font-medium text-white">Net Position</span> as an integer (use minus sign for net short positions).</li>
-              <li>Save the spreadsheet as a comma-separated CSV before uploading.</li>
+              <li>Save the file as Excel (.xlsx) before uploading.</li>
             </ol>
             <div>
               <p className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-2">Allowed instrument labels</p>
@@ -116,7 +115,7 @@ export default function COTDataAdmin() {
             className="bg-green-600 hover:bg-green-700"
           >
             <Download className="mr-2 h-4 w-4" />
-            Download Template CSV
+            Download Template Excel
           </Button>
         </CardContent>
       </Card>
@@ -129,7 +128,7 @@ export default function COTDataAdmin() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FileUpload onFileSelect={handleFileSelect} accept=".csv" />
+          <FileUpload onFileSelect={handleFileSelect} accept=".xlsx,.xls" />
 
           {isProcessing && (
             <div className="text-center text-slate-400">Processing file...</div>

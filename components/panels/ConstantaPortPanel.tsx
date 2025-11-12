@@ -60,10 +60,11 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseDepartureLocation } from "@/lib/countryMappings";
-import { mockVesselData } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { VesselData } from "@/types";
 import { colorForCommodity } from "@/lib/commodityColors";
+import { vesselsApi, Vessel } from "@/lib/api/vessels";
+import { Loader2, AlertCircle } from "lucide-react";
 
 interface ConstantaPortPanelProps {
   className?: string;
@@ -111,6 +112,80 @@ const COMMODITY_ORDER = [
     dataValues: ["Sunflower Oil", "Sunflower seeds oil", "Sunflower Seeds Oil"],
   },
 ];
+
+/**
+ * Normalize commodity description to match database format
+ * This ensures we filter by the normalized values stored in the database
+ */
+const normalizeCommodityForFilter = (description: string): string => {
+  if (!description) return description;
+  
+  const normalized = String(description).trim().toUpperCase();
+  
+  // Sunflower Seeds variants
+  if (/SUNFLOWER\s*SEEDS?\s*MEAL/i.test(description)) {
+    return 'SFS MEAL';
+  }
+  if (/SUNFLOWER\s*SEEDS?\s*OIL/i.test(description)) {
+    return 'SFS OIL';
+  }
+  if (/SUNFLOWER\s*SEEDS?/i.test(description) && !/MEAL|OIL/i.test(description)) {
+    return 'SFS';
+  }
+  
+  // Rapeseed/Canola variants
+  if (/(CANOLA|RAPESEED)\s*MEAL/i.test(description)) {
+    return 'RPS MEAL';
+  }
+  if (/(CANOLA|RAPESEED)\s*OIL/i.test(description)) {
+    return 'RPS OIL';
+  }
+  if (/(CANOLA|RAPESEED)/i.test(description) && !/MEAL|OIL/i.test(description)) {
+    return 'RPS';
+  }
+  
+  // Corn/Maize normalization
+  if (/CORN|MAIZE/i.test(description)) {
+    return 'CORN';
+  }
+  
+  // Return original if no match (preserve other commodities like Wheat, Barley, etc.)
+  return String(description).trim();
+};
+
+/**
+ * Get commodity values for a selected commodity filter
+ * EXACT MATCHING ONLY - no variants for parent commodities
+ * - If selecting "RPS", returns only "RPS" (not "RPS OIL" or "RPS MEAL")
+ * - If selecting "SFS", returns only "SFS" (not "SFS OIL" or "SFS MEAL")
+ * - Handles both keys (like "WHEAT") and dataValues (like "Wheat")
+ */
+const getCommodityFilterValues = (selectedCommodity: string): string[] => {
+  if (selectedCommodity === "all") {
+    return [];
+  }
+
+  // First, try to find by key (e.g., "WHEAT", "SFS", "RPS_MEAL")
+  let commodityConfig = COMMODITY_ORDER.find(c => c.key === selectedCommodity);
+  
+  // If not found by key, try to find by dataValue (e.g., "Wheat", "Sunflower Seeds")
+  if (!commodityConfig) {
+    commodityConfig = COMMODITY_ORDER.find(c => 
+      c.dataValues.some(v => v.toLowerCase() === selectedCommodity.toLowerCase())
+    );
+  }
+
+  if (!commodityConfig) {
+    // Fallback: normalize and return the selected value as exact match
+    return [normalizeCommodityForFilter(selectedCommodity)];
+  }
+
+  // EXACT MATCHING: Return only the exact commodity values, no variants
+  // Normalize values to match database format
+  const normalized = commodityConfig.dataValues.map(v => normalizeCommodityForFilter(v));
+  // Return unique values (both original and normalized for backward compatibility)
+  return [...new Set([...commodityConfig.dataValues, ...normalized])];
+};
 
 const STATUS_ORDER = [
   "ETA",
@@ -200,7 +275,6 @@ const columns: ColumnConfig[] = [
   },
   { key: "quantity" as SortField, label: "Quantity (mt)", visible: true },
   { key: "shipper" as SortField, label: "Shipper", visible: true },
-
   {
     key: "destination_country" as SortField,
     label: "Destination Country",
@@ -220,17 +294,45 @@ const columns: ColumnConfig[] = [
     label: "Departure Terminal",
     visible: true,
   },
-  // { key: 'operation_type' as SortField, label: 'Operation Type', visible: true },
-  // { key: 'operation_completed' as SortField, label: 'Completed Date', visible: true },
   { key: "vessel_name" as SortField, label: "Vessel Name", visible: true },
   { key: "status" as SortField, label: "Status", visible: true },
-
-  { key: "cargo_origin_1" as SortField, label: "Origin 1", visible: false },
-  { key: "cargo_origin_2" as SortField, label: "Origin 2", visible: false },
 ];
 
+// Transform backend Vessel to frontend VesselData format
+const transformVesselToVesselData = (vessel: Vessel, index: number): VesselData => {
+  // Convert quantity to number (PostgreSQL decimal returns as string)
+  let quantity: number | null = null;
+  if (vessel.quantity !== null && vessel.quantity !== undefined) {
+    if (typeof vessel.quantity === 'string') {
+      const parsed = parseFloat(vessel.quantity);
+      quantity = isNaN(parsed) ? null : parsed;
+    } else if (typeof vessel.quantity === 'number') {
+      quantity = vessel.quantity;
+    }
+  }
+
+  return {
+    id: index,
+    vessel_name: vessel.vesselName,
+    status: vessel.status,
+    departure_location: vessel.departureLocation,
+    departure_terminal: vessel.departureTerminal || "",
+    destination_country: vessel.destinationCountry || "",
+    operation_type: vessel.operationType,
+    operation_completed: vessel.operationCompleted || "",
+    commodity_description: vessel.commodityDescription,
+    quantity: quantity ?? 0,
+    shipper: vessel.shipper || "",
+    cargo_origin_1: vessel.cargoOrigin1 || "",
+    cargo_origin_2: vessel.cargoOrigin2 || "",
+  };
+};
+
 export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
-  const [data] = useState<VesselData[]>(mockVesselData);
+  const [data, setData] = useState<VesselData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("operation_completed");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -256,10 +358,24 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   // Chart view states
   const [selectedChartCommodity, setSelectedChartCommodity] = useState("WHEAT");
   const [selectedDestinationCountries, setSelectedDestinationCountries] =
-    useState<string[]>([]);
+    useState<string[]>([]); // Will be set to all countries when loaded
   const [countrySearchTerm, setCountrySearchTerm] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [chartData, setChartData] = useState<Array<{ shipper: string; quantity: number }>>([]);
+  const [chartLoading, setChartLoading] = useState(false);
+  const [uniqueDestinations, setUniqueDestinations] = useState<string[]>([]);
+  
+  // Filter metadata from backend (industry standard approach)
+  const [filterMetadata, setFilterMetadata] = useState<{
+    operationTypes: string[];
+    statuses: string[];
+    commodityGroups: string[];
+    commodityDescriptions: string[];
+    shippers: string[];
+    departureTerminals: string[];
+    destinationCountries: string[];
+  } | null>(null);
 
   // Handle responsive chart sizing
   useEffect(() => {
@@ -279,76 +395,103 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const filteredAndSortedData = useMemo(() => {
-    let filtered = data.filter((row) => {
-      const matchesSearch = Object.values(row).some((value) =>
-        value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  // Map frontend sort field to backend sort field
+  const mapSortField = (field: SortField): string => {
+    const mapping: Record<string, string> = {
+      vessel_name: 'vesselName',
+      operation_completed: 'operationCompleted',
+      operation_commenced: 'operationCommenced',
+      commodity_description: 'commodityDescription',
+      destination_country: 'destinationCountry',
+      departure_location: 'departureLocation',
+      departure_terminal: 'departureTerminal',
+      operation_type: 'operationType',
+      quantity: 'quantity',
+      status: 'status',
+    };
+    return mapping[field] || 'operationCommenced';
+  };
 
-      const matchesCommodity =
-        commodityFilter === "all" ||
-        row.commodity_description === commodityFilter;
-      const matchesOperationType =
-        operationTypeFilter === "all" ||
-        row.operation_type === operationTypeFilter;
-      const matchesShipper =
-        shipperFilter === "all" || row.shipper === shipperFilter;
-      const matchesDestination =
-        destinationFilter === "all" ||
-        row.destination_country === destinationFilter;
-      const matchesVesselName =
-        vesselNameFilter === "all" || row.vessel_name === vesselNameFilter;
-      const matchesTerminal =
-        terminalFilter === "all" || row.departure_terminal === terminalFilter;
-      const matchesOperationStatus =
-        operationStatusFilter.length === 0 ||
-        operationStatusFilter.includes(row.status);
+  // Fetch data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      // Quantity filter logic
-      const matchesQuantity =
-        quantityFilter === "all" ||
-        (() => {
-          const qty = row.quantity || 0;
-          if (quantityFilter === "<5000") return qty < 5000;
-          if (quantityFilter === "5000-10000")
-            return qty >= 5000 && qty <= 10000;
-          if (quantityFilter === ">10000") return qty > 10000;
-          return true;
-        })();
+        // Build query parameters
+        const queryParams: any = {
+          skip: (currentPage - 1) * pageSize,
+          take: pageSize,
+          sortBy: mapSortField(sortField),
+          sortOrder: sortDirection.toUpperCase() as 'ASC' | 'DESC',
+        };
 
-      return (
-        matchesSearch &&
-        matchesCommodity &&
-        matchesOperationType &&
-        matchesShipper &&
-        matchesDestination &&
-        matchesVesselName &&
-        matchesTerminal &&
-        matchesOperationStatus &&
-        matchesQuantity
-      );
-    });
+        // Add search
+        if (searchTerm) {
+          queryParams.search = searchTerm;
+        }
 
-    filtered.sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
+        // Add filters
+        if (commodityFilter !== "all") {
+          const commodityValues = getCommodityFilterValues(commodityFilter);
+          if (commodityValues.length > 0) {
+            // Use commodityDescriptions array for filtering multiple values
+            queryParams.commodityDescriptions = commodityValues;
+          }
+        }
+        if (operationTypeFilter !== "all") {
+          queryParams.operationType = operationTypeFilter;
+        }
+        if (shipperFilter !== "all") {
+          queryParams.shipper = shipperFilter;
+        }
+        if (destinationFilter !== "all") {
+          queryParams.destinationCountry = destinationFilter;
+        }
+        if (vesselNameFilter !== "all") {
+          queryParams.vesselName = vesselNameFilter;
+        }
+        if (terminalFilter !== "all") {
+          queryParams.departureTerminal = terminalFilter;
+        }
+        if (operationStatusFilter.length > 0) {
+          queryParams.statuses = operationStatusFilter;
+        }
 
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortDirection === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
+        // Quantity filter
+        if (quantityFilter !== "all") {
+          if (quantityFilter === "<5000") {
+            queryParams.maxQuantity = 4999;
+          } else if (quantityFilter === "5000-10000") {
+            queryParams.minQuantity = 5000;
+            queryParams.maxQuantity = 10000;
+          } else if (quantityFilter === ">10000") {
+            queryParams.minQuantity = 10001;
+          }
+        }
+
+        const response = await vesselsApi.getVessels(queryParams);
+        const transformedData = response.data.map((vessel, index) =>
+          transformVesselToVesselData(vessel, index)
+        );
+        
+        setData(transformedData);
+        setTotalCount(response.total);
+      } catch (err: any) {
+        console.error('Failed to fetch vessels:', err);
+        setError(err.response?.data?.message || 'Failed to load vessel data');
+        setData([]);
+        setTotalCount(0);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
-      }
-
-      return 0;
-    });
-
-    return filtered;
+    fetchData();
   }, [
-    data,
+    currentPage,
+    pageSize,
     searchTerm,
     sortField,
     sortDirection,
@@ -362,15 +505,9 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
     operationStatusFilter,
   ]);
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredAndSortedData.slice(startIndex, startIndex + pageSize);
-  }, [filteredAndSortedData, currentPage, pageSize]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredAndSortedData.length / pageSize)
-  );
+  // Use data directly (already paginated and filtered by backend)
+  const paginatedData = data;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   // Reset to first page when filters or search change
   useEffect(() => {
@@ -401,6 +538,8 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
     }
   };
 
+  // Fetch unique values for filters (we'll need to fetch all data or create a separate endpoint)
+  // For now, we'll use a simple approach: fetch distinct values from current data
   const getUniqueValues = (field: keyof VesselData) => {
     return Array.from(
       new Set(data.map((row) => row[field]).filter(Boolean))
@@ -461,7 +600,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   const exportCSV = () => {
     const visibleCols = columns.filter((col) => visibleColumns[col.key]);
     const headers = visibleCols.map((col) => col.label).join(",");
-    const rows = filteredAndSortedData
+    const rows = data
       .map((row) =>
         visibleCols
           .map((col) => {
@@ -511,11 +650,84 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
     return pages;
   };
 
-  // Chart data computation
-  const uniqueDestinations = useMemo(
-    () => getUniqueValues("destination_country"),
-    [data]
-  );
+  // Fetch unique destinations on mount and set all as selected by default
+  // Fetch filter metadata and unique destinations (industry standard approach)
+  useEffect(() => {
+    const fetchFilterMetadata = async () => {
+      try {
+        const metadata = await vesselsApi.getFilterMetadata();
+        setFilterMetadata(metadata);
+        setUniqueDestinations(metadata.destinationCountries);
+        // Set all countries as selected by default (only if not already set)
+        setSelectedDestinationCountries(prev => {
+          if (prev.length === 0 && metadata.destinationCountries.length > 0) {
+            return metadata.destinationCountries;
+          }
+          return prev;
+        });
+      } catch (err) {
+        console.error('Failed to fetch filter metadata:', err);
+        // Fallback: fetch unique destinations only
+        try {
+          const destinations = await vesselsApi.getUniqueDestinations();
+          setUniqueDestinations(destinations);
+          setSelectedDestinationCountries(prev => {
+            if (prev.length === 0 && destinations.length > 0) {
+              return destinations;
+            }
+            return prev;
+          });
+        } catch (destErr) {
+          console.error('Failed to fetch unique destinations:', destErr);
+        }
+      }
+    };
+    fetchFilterMetadata();
+  }, []);
+
+  // Fetch chart data from backend (computed from ALL data, not just paginated)
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        setChartLoading(true);
+        const commodityConfig = COMMODITY_ORDER.find(
+          (c) => c.key === selectedChartCommodity
+        );
+        if (!commodityConfig) {
+          setChartData([]);
+          return;
+        }
+
+        // Get all commodity values for this commodity (handles parent commodities like SFS, RPS)
+        const commodityValues = getCommodityFilterValues(commodityConfig.dataValues[0]);
+        
+        // If all countries are selected (or empty array), don't filter by countries (get all)
+        // Otherwise, filter by selected countries
+        const destinationCountries = 
+          selectedDestinationCountries.length === 0 || 
+          selectedDestinationCountries.length === uniqueDestinations.length
+            ? undefined // All countries selected, don't filter
+            : selectedDestinationCountries;
+        
+        // For chart data, send all commodity values as an array
+        const response = await vesselsApi.getChartData({
+          commodity: commodityValues[0], // Primary commodity for backward compatibility
+          commodityDescriptions: commodityValues.length > 1 ? commodityValues : undefined, // All variants if multiple
+          destinationCountries,
+          operationType: 'Export',
+        });
+
+        setChartData(response.data);
+      } catch (err) {
+        console.error('Failed to fetch chart data:', err);
+        setChartData([]);
+      } finally {
+        setChartLoading(false);
+      }
+    };
+
+    fetchChartData();
+  }, [selectedChartCommodity, selectedDestinationCountries]);
 
   // Filtered countries based on search
   const filteredCountries = useMemo(() => {
@@ -524,50 +736,6 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
       country.toLowerCase().includes(countrySearchTerm.toLowerCase())
     );
   }, [uniqueDestinations, countrySearchTerm]);
-
-  const chartData = useMemo(() => {
-    // Find the commodity config for the selected tab
-    const commodityConfig = COMMODITY_ORDER.find(
-      (c) => c.key === selectedChartCommodity
-    );
-    if (!commodityConfig) return [];
-
-    // Filter data by selected commodity and destinations
-    const filtered = data.filter((row) => {
-      const matchesCommodity = commodityConfig.dataValues.includes(
-        row.commodity_description
-      );
-      const matchesDestination =
-        selectedDestinationCountries.length === 0 ||
-        selectedDestinationCountries.includes(row.destination_country);
-      const quantity =
-        typeof row.quantity === "number"
-          ? row.quantity
-          : Number(row.quantity ?? 0);
-      return (
-        matchesCommodity &&
-        matchesDestination &&
-        row.operation_type === "Export" &&
-        quantity > 0
-      );
-    });
-
-    const shipperData: Record<string, number> = {};
-    filtered.forEach((row) => {
-      const quantity =
-        typeof row.quantity === "number"
-          ? row.quantity
-          : Number(row.quantity ?? 0);
-      if (!quantity || Number.isNaN(quantity)) return;
-
-      const shipper = row.shipper?.trim() || "Unknown";
-      shipperData[shipper] = (shipperData[shipper] || 0) + quantity;
-    });
-
-    return Object.entries(shipperData)
-      .map(([shipper, qty]) => ({ shipper, quantity: qty }))
-      .sort((a, b) => b.quantity - a.quantity);
-  }, [data, selectedChartCommodity, selectedDestinationCountries]);
 
   return (
     <Card
@@ -643,6 +811,8 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                   <span className="text-sm">
                     {selectedDestinationCountries.length === 0
                       ? "Select countries..."
+                      : selectedDestinationCountries.length === uniqueDestinations.length && uniqueDestinations.length > 0
+                      ? "All countries"
                       : `${selectedDestinationCountries.length} ${
                           selectedDestinationCountries.length === 1
                             ? "country"
@@ -761,7 +931,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
             className="outline-none focus:outline-none [&>*]:outline-none [&>*]:focus:outline-none"
             style={{ height: "300px" }}
           >
-            {!isMounted ? (
+            {!isMounted || chartLoading ? (
               <div className="w-full h-full flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
               </div>
@@ -844,9 +1014,9 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Commodities</SelectItem>
-                  {getUniqueValues("commodity_description").map((commodity) => (
-                    <SelectItem key={commodity} value={commodity}>
-                      {getCommodityLabel(commodity)}
+                  {COMMODITY_ORDER.map((commodity) => (
+                    <SelectItem key={commodity.key} value={commodity.dataValues[0]}>
+                      {commodity.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -867,7 +1037,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  {getUniqueValues("operation_type").map((type) => (
+                  {(filterMetadata?.operationTypes || ['Export', 'Import', 'Transit']).map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}
                     </SelectItem>
@@ -905,7 +1075,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Shippers</SelectItem>
-                  {getUniqueValues("shipper").map((shipper) => (
+                  {(filterMetadata?.shippers || getUniqueValues("shipper")).map((shipper) => (
                     <SelectItem key={shipper} value={shipper}>
                       {shipper}
                     </SelectItem>
@@ -928,7 +1098,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Destinations</SelectItem>
-                  {getUniqueValues("destination_country").map((dest) => (
+                  {(filterMetadata?.destinationCountries || getUniqueValues("destination_country")).map((dest) => (
                     <SelectItem key={dest} value={dest}>
                       {dest}
                     </SelectItem>
@@ -971,7 +1141,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Terminals</SelectItem>
-                  {getUniqueValues("departure_terminal").map((terminal) => (
+                  {(filterMetadata?.departureTerminals || getUniqueValues("departure_terminal")).map((terminal) => (
                     <SelectItem key={terminal} value={terminal}>
                       {terminal}
                     </SelectItem>
@@ -1089,13 +1259,11 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Commodities</SelectItem>
-                        {getUniqueValues("commodity_description").map(
-                          (commodity) => (
-                            <SelectItem key={commodity} value={commodity}>
-                              {getCommodityLabel(commodity)}
-                            </SelectItem>
-                          )
-                        )}
+                        {COMMODITY_ORDER.map((commodity) => (
+                          <SelectItem key={commodity.key} value={commodity.dataValues[0]}>
+                            {commodity.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1114,7 +1282,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Types</SelectItem>
-                        {getUniqueValues("operation_type").map((type) => (
+                        {(filterMetadata?.operationTypes || ['Export', 'Import', 'Transit']).map((type) => (
                           <SelectItem key={type} value={type}>
                             {type}
                           </SelectItem>
@@ -1344,7 +1512,12 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
             <div className="flex flex-wrap gap-2">
               {commodityFilter !== "all" && (
                 <Badge variant="secondary" className="gap-1">
-                  Commodity: {getCommodityLabel(commodityFilter)}
+                  Commodity: {(() => {
+                    const commodityConfig = COMMODITY_ORDER.find(
+                      c => c.dataValues.includes(commodityFilter)
+                    );
+                    return commodityConfig ? commodityConfig.label : getCommodityLabel(commodityFilter);
+                  })()}
                   <X
                     className="h-3 w-3 cursor-pointer"
                     onClick={() => setCommodityFilter("all")}
@@ -1424,7 +1597,32 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
         {/* Mobile Card View */}
         <div className="md:hidden">
           <div className="p-4 space-y-3">
-            {paginatedData.map((row) => (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                <p className="text-slate-400">Loading vessel data...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+                <p className="text-red-400 mb-4">{error}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setError(null);
+                    setCurrentPage((prev) => prev);
+                  }}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : paginatedData.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-slate-400">No vessels found</p>
+              </div>
+            ) : (
+              paginatedData.map((row) => (
               <Card
                 key={row.id}
                 className="bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 transition-all duration-200"
@@ -1518,7 +1716,8 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            ))
+            )}
           </div>
 
           {/* Mobile Pagination */}
@@ -1527,8 +1726,8 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
               {/* Results info */}
               <div className="text-xs text-slate-400 text-center">
                 Showing {(currentPage - 1) * pageSize + 1}-
-                {Math.min(currentPage * pageSize, filteredAndSortedData.length)}{" "}
-                of {filteredAndSortedData.length}
+                {Math.min(currentPage * pageSize, totalCount)}{" "}
+                of {totalCount}
               </div>
 
               {/* Pagination controls */}
@@ -1590,11 +1789,57 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="border-b-slate-800 hover:bg-slate-700/10 transition-colors duration-200"
-                >
+              {loading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.filter((col) => visibleColumns[col.key]).length}
+                    className="text-center py-12"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-slate-400">Loading vessel data...</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.filter((col) => visibleColumns[col.key]).length}
+                    className="text-center py-12"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <AlertCircle className="h-8 w-8 text-red-500" />
+                      <p className="text-red-400">{error}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setError(null);
+                          // Trigger refetch by updating a dependency
+                          setCurrentPage((prev) => prev);
+                        }}
+                        className="mt-2"
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedData.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.filter((col) => visibleColumns[col.key]).length}
+                    className="text-center py-12"
+                  >
+                    <p className="text-slate-400">No vessels found</p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedData.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className="border-b-slate-800 hover:bg-slate-700/10 transition-colors duration-200"
+                  >
                   {columns
                     .filter((col) => visibleColumns[col.key])
                     .map((column) => (
@@ -1629,8 +1874,9 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                         )}
                       </TableCell>
                     ))}
-                </TableRow>
-              ))}
+                  </TableRow>
+                ))
+              )}
             </TableBody>
 
             {/* Table Footer with Pagination */}
@@ -1649,9 +1895,9 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                         Showing {(currentPage - 1) * pageSize + 1} to{" "}
                         {Math.min(
                           currentPage * pageSize,
-                          filteredAndSortedData.length
+                          totalCount
                         )}{" "}
-                        of {filteredAndSortedData.length} results
+                        of {totalCount} results
                       </div>
 
                       {/* Pagination controls */}

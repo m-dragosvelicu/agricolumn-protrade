@@ -14,10 +14,12 @@ import {
   BarChart3,
   Globe,
   FileText,
+  Users,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Port Constanta', href: '/admin/port-constanta', icon: Ship },
   { name: 'Daily Prices', href: '/admin/daily-prices', icon: TrendingUp },
   { name: 'COT Data', href: '/admin/cot-data', icon: BarChart3 },

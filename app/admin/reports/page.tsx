@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/admin/FileUpload';
 import { Download, Upload, Table as TableIcon, Plus } from 'lucide-react';
-import { downloadCSV, generateTemplate, parseCSV, validateCSVData, type CSVColumn } from '@/lib/csvUtils';
+import { downloadExcel, generateTemplate, parseExcel, validateExcelData, type ExcelColumn } from '@/lib/excelUtils';
 
-const reportsColumns: CSVColumn[] = [
+const reportsColumns: ExcelColumn[] = [
   { key: 'title', label: 'Title', example: 'Wheat Futures Rise on EU Weather Concerns', required: true },
   { key: 'summary', label: 'Summary', example: 'European wheat futures climbed 2.5%...', required: true },
   { key: 'body', label: 'Body', example: 'Extended body content here...', required: true },
@@ -24,7 +24,7 @@ export default function ReportsAdmin() {
 
   const handleDownloadTemplate = () => {
     const template = generateTemplate(reportsColumns);
-    downloadCSV(template, 'commodity-reports-template.csv');
+    downloadExcel(template, 'commodity-reports-template.xlsx');
   };
 
   const handleFileSelect = async (file: File) => {
@@ -32,8 +32,7 @@ export default function ReportsAdmin() {
     setErrors([]);
 
     try {
-      const text = await file.text();
-      const data = parseCSV(text, reportsColumns);
+      const data = await parseExcel(file, reportsColumns);
 
       // Transform tags from comma-separated string to array
       const transformedData = data.map(row => ({
@@ -42,7 +41,7 @@ export default function ReportsAdmin() {
         isRecommended: row.isRecommended === 'true'
       }));
 
-      const validation = validateCSVData(transformedData, reportsColumns);
+      const validation = validateExcelData(transformedData, reportsColumns);
 
       if (!validation.isValid) {
         setErrors(validation.errors);
@@ -51,8 +50,8 @@ export default function ReportsAdmin() {
         setUploadedData(transformedData);
         setErrors([]);
       }
-    } catch (error) {
-      setErrors(['Failed to parse CSV file. Please check the format.']);
+    } catch (error: any) {
+      setErrors([error.message || 'Failed to parse Excel file. Please check the format.']);
       setUploadedData([]);
     } finally {
       setIsProcessing(false);
@@ -89,7 +88,7 @@ export default function ReportsAdmin() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate-400">
-            Download the commodity reports CSV template. Include title, summary, full body content,
+            Download the commodity reports Excel template. Include title, summary, full body content,
             date (ISO format), tags (comma-separated), slug, and recommendation status.
           </p>
           <Button
@@ -97,7 +96,7 @@ export default function ReportsAdmin() {
             className="bg-green-600 hover:bg-green-700"
           >
             <Download className="mr-2 h-4 w-4" />
-            Download Template CSV
+            Download Template Excel
           </Button>
         </CardContent>
       </Card>
@@ -110,7 +109,7 @@ export default function ReportsAdmin() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FileUpload onFileSelect={handleFileSelect} accept=".csv" />
+          <FileUpload onFileSelect={handleFileSelect} accept=".xlsx,.xls" />
 
           {isProcessing && (
             <div className="text-center text-slate-400">Processing file...</div>

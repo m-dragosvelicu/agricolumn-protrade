@@ -38,10 +38,18 @@ class ApiClient {
       (response) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          // Unauthorized - clear token and redirect to login
+          // Unauthorized - clear token
           Cookies.remove('auth_token');
+          
+          // Only redirect if not already on login/register pages
+          // This prevents redirect loop and allows login errors to display
           if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+            const currentPath = window.location.pathname;
+            const isAuthPage = currentPath === '/login' || currentPath === '/register';
+            
+            if (!isAuthPage) {
+              window.location.href = '/login';
+            }
           }
         }
         return Promise.reject(error);

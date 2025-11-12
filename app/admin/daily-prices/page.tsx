@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/admin/FileUpload';
 import { Download, Upload, Table as TableIcon } from 'lucide-react';
-import { downloadCSV, generateTemplate, parseCSV, validateCSVData, type CSVColumn } from '@/lib/csvUtils';
+import { downloadExcel, generateTemplate, parseExcel, validateExcelData, type ExcelColumn } from '@/lib/excelUtils';
 
-const dailyPricesColumns: CSVColumn[] = [
+const dailyPricesColumns: ExcelColumn[] = [
   { key: 'date', label: 'Date', example: '2025-09-17', required: true },
   { key: 'wheatBread', label: 'Wheat Bread (EUR/mt)', example: '189', required: false },
   { key: 'wheatFeed', label: 'Wheat Feed (EUR/mt)', example: '184', required: false },
@@ -24,7 +24,7 @@ export default function DailyPricesAdmin() {
 
   const handleDownloadTemplate = () => {
     const template = generateTemplate(dailyPricesColumns);
-    downloadCSV(template, 'daily-prices-template.csv');
+    downloadExcel(template, 'daily-prices-template.xlsx');
   };
 
   const handleFileSelect = async (file: File) => {
@@ -32,10 +32,9 @@ export default function DailyPricesAdmin() {
     setErrors([]);
 
     try {
-      const text = await file.text();
-      const data = parseCSV(text, dailyPricesColumns);
+      const data = await parseExcel(file, dailyPricesColumns);
 
-      const validation = validateCSVData(data, dailyPricesColumns);
+      const validation = validateExcelData(data, dailyPricesColumns);
 
       if (!validation.isValid) {
         setErrors(validation.errors);
@@ -44,8 +43,8 @@ export default function DailyPricesAdmin() {
         setUploadedData(data);
         setErrors([]);
       }
-    } catch (error) {
-      setErrors(['Failed to parse CSV file. Please check the format.']);
+    } catch (error: any) {
+      setErrors([error.message || 'Failed to parse Excel file. Please check the format.']);
       setUploadedData([]);
     } finally {
       setIsProcessing(false);
@@ -76,7 +75,7 @@ export default function DailyPricesAdmin() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate-400">
-            Download the daily prices CSV template with proper column headers.
+            Download the daily prices Excel template with proper column headers.
             All price fields are in EUR/mt or USD/mt as specified.
           </p>
           <Button
@@ -84,7 +83,7 @@ export default function DailyPricesAdmin() {
             className="bg-green-600 hover:bg-green-700"
           >
             <Download className="mr-2 h-4 w-4" />
-            Download Template CSV
+            Download Template Excel
           </Button>
         </CardContent>
       </Card>
@@ -97,7 +96,7 @@ export default function DailyPricesAdmin() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FileUpload onFileSelect={handleFileSelect} accept=".csv" />
+          <FileUpload onFileSelect={handleFileSelect} accept=".xlsx,.xls" />
 
           {isProcessing && (
             <div className="text-center text-slate-400">Processing file...</div>

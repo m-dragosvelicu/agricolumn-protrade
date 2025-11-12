@@ -1,13 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Shield, Calendar, LogOut } from 'lucide-react';
+import { Mail, Shield, LogOut, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { authApi } from '@/lib/api/auth';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function ProfilePage() {
   return (
@@ -19,10 +29,38 @@ export default function ProfilePage() {
 
 function ProfileContent() {
   const { user, logout } = useAuth();
+  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   if (!user) {
     return null;
   }
+
+  const handleChangePassword = async () => {
+    setError(null);
+    setSuccess(false);
+    setIsLoading(true);
+
+    try {
+      await authApi.changePassword();
+      setSuccess(true);
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message ||
+          'Failed to send password reset email. Please try again.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDialogClose = () => {
+    setIsChangePasswordDialogOpen(false);
+    setError(null);
+    setSuccess(false);
+  };
 
   const getInitials = (email: string) => {
     return email
@@ -149,10 +187,14 @@ function ProfileContent() {
                   <div>
                     <p className="text-sm font-medium text-white">Password</p>
                     <p className="text-xs text-slate-400 mt-1">
-                      Last updated securely
+                      Change your password via email verification
                     </p>
                   </div>
-                  <button className="text-sm text-amber-500 hover:text-amber-400 transition-colors text-left sm:text-right">
+                  <button
+                    onClick={() => setIsChangePasswordDialogOpen(true)}
+                    className="text-sm text-amber-500 hover:text-amber-400 transition-colors text-left sm:text-right flex items-center gap-2"
+                  >
+                    <Lock className="w-4 h-4" />
                     Change Password
                   </button>
                 </div>
@@ -161,6 +203,76 @@ function ProfileContent() {
           </Card>
         </div>
       </div>
+
+      {/* Change Password Dialog */}
+      <Dialog open={isChangePasswordDialogOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="bg-slate-800 border-slate-700 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">Change Password</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {success
+                ? 'A password reset link has been sent to your email address.'
+                : 'We will send a password reset link to your email address. Click the link in the email to set a new password.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {error && (
+            <Alert variant="destructive" className="bg-red-900/20 border-red-700">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-red-200">{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {success && (
+            <Alert className="bg-green-900/20 border-green-700">
+              <CheckCircle2 className="h-4 w-4 text-green-400" />
+              <AlertDescription className="text-green-200">
+                A password reset link has been sent to <strong>{user.email}</strong>. 
+                Please check your inbox and follow the instructions to reset your password.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <DialogFooter>
+            {success ? (
+              <Button
+                onClick={handleDialogClose}
+                className="bg-slate-700 hover:bg-slate-600 text-white"
+              >
+                Close
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleDialogClose}
+                  disabled={isLoading}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleChangePassword}
+                  disabled={isLoading}
+                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Send Reset Link
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

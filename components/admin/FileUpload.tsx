@@ -15,7 +15,7 @@ interface FileUploadProps {
 
 export function FileUpload({
   onFileSelect,
-  accept = '.csv,.xlsx,.xls',
+  accept = '.xlsx,.xls',
   maxSize = 10,
   className
 }: FileUploadProps) {

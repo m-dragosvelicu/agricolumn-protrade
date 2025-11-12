@@ -49,9 +49,9 @@ export function LoginForm() {
       router.push('/');
       router.refresh();
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || 'Invalid email or password. Please try again.',
-      );
+      // Set error message - the interceptor won't redirect since we're on login page
+      const errorMessage = err.response?.data?.message || 'Invalid email or password. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -67,13 +67,6 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
               Email
@@ -121,6 +114,15 @@ export function LoginForm() {
               </p>
             )}
           </div>
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <AlertDescription className="text-red-600 dark:text-red-400">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (

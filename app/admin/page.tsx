@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Ship, TrendingUp, BarChart3, Globe, FileText, Upload } from 'lucide-react';
 
@@ -85,14 +86,14 @@ export default function AdminDashboard() {
               { name: 'Upload DG AGRI', href: '/admin/dg-agri' },
               { name: 'Create Report', href: '/admin/reports' },
             ].map((action) => (
-              <a
+              <Link
                 key={action.name}
                 href={action.href}
                 className="flex items-center justify-center px-4 py-3 bg-slate-700 rounded-lg text-white hover:bg-slate-600 transition-colors"
               >
                 <Upload className="mr-2 h-4 w-4" />
                 {action.name}
-              </a>
+              </Link>
             ))}
           </div>
         </CardContent>

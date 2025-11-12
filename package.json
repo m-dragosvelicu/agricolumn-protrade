@@ -16,8 +16,10 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "country-data": "^0.0.31",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
+    "i": "^0.3.7",
     "input-otp": "^1.4.2",
     "js-cookie": "^3.0.5",
     "lightweight-charts": "^5.0.9",
@@ -34,10 +36,12 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/country-data": "^0.0.5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
