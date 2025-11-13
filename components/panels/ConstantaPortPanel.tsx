@@ -12,7 +12,7 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -362,7 +362,7 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   const [countrySearchTerm, setCountrySearchTerm] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [chartData, setChartData] = useState<Array<{ shipper: string; quantity: number }>>([]);
+  const [chartData, setChartData] = useState<Array<{ country: string; quantity: number }>>([]);
   const [chartLoading, setChartLoading] = useState(false);
   const [uniqueDestinations, setUniqueDestinations] = useState<string[]>([]);
   
@@ -730,12 +730,78 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
   }, [selectedChartCommodity, selectedDestinationCountries]);
 
   // Filtered countries based on search
+  const chartScrollRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
   const filteredCountries = useMemo(() => {
     if (!countrySearchTerm) return uniqueDestinations;
     return uniqueDestinations.filter((country) =>
       country.toLowerCase().includes(countrySearchTerm.toLowerCase())
     );
   }, [uniqueDestinations, countrySearchTerm]);
+
+  const chartDataLength = chartData.length;
+  const chartMinWidth = useMemo(() => {
+    const minBarWidth = isMobile ? 80 : 70;
+    const baseWidth = isMobile ? 360 : 640;
+    if (chartDataLength === 0) {
+      return baseWidth;
+    }
+    return Math.max(chartDataLength * minBarWidth, baseWidth);
+  }, [chartDataLength, isMobile]);
+
+  const updateScrollIndicators = () => {
+    const container = chartScrollRef.current;
+    if (!container) {
+      setCanScrollLeft(false);
+      setCanScrollRight(false);
+      return;
+    }
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    const tolerance = 2;
+    setCanScrollLeft(scrollLeft > tolerance);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - tolerance);
+  };
+
+  useEffect(() => {
+    updateScrollIndicators();
+  }, [chartDataLength, chartMinWidth, isMobile]);
+
+  const handleScrollRight = () => {
+    const container = chartScrollRef.current;
+    if (!container) return;
+    const scrollAmount = container.clientWidth * 0.3;
+    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  };
+
+  const handleScrollLeft = () => {
+    const container = chartScrollRef.current;
+    if (!container) return;
+    const scrollAmount = container.clientWidth * 0.3;
+    container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const container = chartScrollRef.current;
+    if (!container) return;
+
+    const onScroll = () => updateScrollIndicators();
+    container.addEventListener('scroll', onScroll);
+    updateScrollIndicators();
+
+    return () => {
+      container.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    const container = chartScrollRef.current;
+    if (!container) return;
+    container.scrollLeft = 0;
+    updateScrollIndicators();
+  }, [selectedChartCommodity, selectedDestinationCountries]);
 
   return (
     <Card
@@ -940,58 +1006,91 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
                 No export data available for this selection.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartData}
-                  margin={{
-                    top: 20,
-                    right: isMobile ? 10 : 30,
-                    left: isMobile ? 0 : 20,
-                    bottom: isMobile ? 60 : 40,
-                  }}
+              <div className="relative h-full">
+                <button
+                  type="button"
+                  onClick={handleScrollLeft}
+                  disabled={!canScrollLeft}
+                  className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-slate-600/60 bg-slate-900/80 p-2 text-slate-100 shadow-xl backdrop-blur transition hover:bg-slate-800/90 focus:outline-none focus:ring-2 focus:ring-yellow-400/60 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Scroll chart left"
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis
-                    dataKey="shipper"
-                    fontSize={isMobile ? 10 : 12}
-                    stroke="#9ca3af"
-                    angle={-45}
-                    textAnchor="end"
-                    height={isMobile ? 80 : 60}
-                  />
-                  <YAxis
-                    fontSize={isMobile ? 10 : 12}
-                    tickFormatter={(value) => numberFormatter.format(value)}
-                    stroke="#9ca3af"
-                    label={{
-                      value: "QTY (tonnes)",
-                      angle: -90,
-                      position: "insideLeft",
-                      style: { fill: "#9ca3af", fontSize: isMobile ? 10 : 12 },
-                    }}
-                  />
-                  <Tooltip
-                    formatter={(value: number) => [
-                      `${numberFormatter.format(value)} tonnes`,
-                      "Quantity",
-                    ]}
-                    labelFormatter={(label) => `Shipper: ${label}`}
-                    contentStyle={{
-                      backgroundColor: "#1f2937",
-                      border: "1px solid #374151",
-                      borderRadius: "8px",
-                      color: "#ffffff",
-                      fontSize: isMobile ? "12px" : "14px",
-                    }}
-                  />
-                  <Bar
-                    dataKey="quantity"
-                    fill={colorForCommodity(selectedChartCommodity)}
-                    name="Quantity"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleScrollRight}
+                  disabled={!canScrollRight}
+                  className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-slate-600/60 bg-slate-900/80 p-2 text-slate-100 shadow-xl backdrop-blur transition hover:bg-slate-800/90 focus:outline-none focus:ring-2 focus:ring-yellow-400/60 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Scroll chart right"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <div
+                  ref={chartScrollRef}
+                  className={cn(
+                    "h-full overflow-x-auto overflow-y-hidden rounded-md border border-slate-700/40 bg-slate-900/30",
+                    "scrollbar-thin scrollbar-thumb-slate-700/70 scrollbar-track-transparent"
+                  )}
+                  onScroll={updateScrollIndicators}
+                >
+                  <div style={{ minWidth: chartMinWidth, height: "100%", position: "relative" }}>
+                    <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-slate-900/80 via-slate-900/40 to-transparent" />
+                    <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-slate-900/80 via-slate-900/40 to-transparent" />
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={chartData}
+                        margin={{
+                          top: 20,
+                          right: isMobile ? 10 : 30,
+                          left: isMobile ? 0 : 20,
+                          bottom: isMobile ? 60 : 40,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis
+                          dataKey="country"
+                          fontSize={isMobile ? 10 : 12}
+                          stroke="#9ca3af"
+                          angle={-45}
+                          textAnchor="end"
+                          height={isMobile ? 80 : 60}
+                        />
+                        <YAxis
+                          fontSize={isMobile ? 10 : 12}
+                          tickFormatter={(value) => numberFormatter.format(value)}
+                          stroke="#9ca3af"
+                          label={{
+                            value: "QTY (tonnes)",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: { fill: "#9ca3af", fontSize: isMobile ? 10 : 12 },
+                          }}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => [
+                            `${numberFormatter.format(value)} tonnes`,
+                            "Quantity",
+                          ]}
+                          labelFormatter={(label) => `Country: ${label}`}
+                          contentStyle={{
+                            backgroundColor: "#1f2937",
+                            border: "1px solid #374151",
+                            borderRadius: "8px",
+                            color: "#ffffff",
+                            fontSize: isMobile ? "12px" : "14px",
+                          }}
+                        />
+                        <Bar
+                          dataKey="quantity"
+                          fill={colorForCommodity(selectedChartCommodity)}
+                          name="Quantity"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -1150,81 +1249,33 @@ export function ConstantaPortPanel({ className }: ConstantaPortPanelProps) {
               </Select>
             </div>
 
-            {/* Operation Status - Multi-select */}
+            {/* Operation Status Filter */}
             <div className="flex flex-col space-y-1.5">
               <Label className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-                Operation Status
+                Status
               </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-[160px] justify-between h-10"
-                  >
-                    <span className="text-sm">
-                      {operationStatusFilter.length === 0
-                        ? "All"
-                        : `${operationStatusFilter.length} selected`}
-                    </span>
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0" align="start">
-                  <div className="p-2 space-y-1">
-                    {statusOptions.length > 0 ? (
-                      statusOptions.map((status) => (
-                        <div
-                          key={status}
-                          className="flex items-center space-x-2 hover:bg-slate-700/30 p-2 rounded transition-colors cursor-pointer"
-                          onClick={() => {
-                            if (operationStatusFilter.includes(status)) {
-                              setOperationStatusFilter(
-                                operationStatusFilter.filter(
-                                  (s) => s !== status
-                                )
-                              );
-                            } else {
-                              setOperationStatusFilter([
-                                ...operationStatusFilter,
-                                status,
-                              ]);
-                            }
-                          }}
-                        >
-                          <Checkbox
-                            id={`status-${status}`}
-                            checked={operationStatusFilter.includes(status)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="pointer-events-none"
-                          />
-                          <span className="text-sm text-slate-300 flex-1">
-                            {status}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="py-2 text-sm text-slate-400 text-center">
-                        No status data available
-                      </p>
-                    )}
-                    {operationStatusFilter.length > 0 && (
-                      <div className="pt-2 border-t border-slate-700/50">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOperationStatusFilter([]);
-                          }}
-                          className="w-full text-xs"
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <Select
+                value={operationStatusFilter.length === 0 ? "all" : operationStatusFilter[0]}
+                onValueChange={(value) => {
+                  if (value === "all") {
+                    setOperationStatusFilter([]);
+                  } else {
+                    setOperationStatusFilter([value]);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  {(filterMetadata?.statuses || statusOptions).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

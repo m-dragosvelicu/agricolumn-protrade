@@ -81,14 +81,14 @@ export interface VesselsResponse {
 }
 
 export interface ChartDataPoint {
-  shipper: string;
+  country: string;
   quantity: number;
 }
 
 export interface ChartDataResponse {
   data: ChartDataPoint[];
   totalQuantity: number;
-  uniqueShippers: number;
+  uniqueCountries: number;
 }
 
 export interface ChartDataParams {

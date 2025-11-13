@@ -103,8 +103,8 @@ body {
 
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -124,8 +124,26 @@ body {
 
 /* Firefox Scrollbar */
 * {
-  scrollbar-width: thin;
+  scrollbar-width: auto;
   scrollbar-color: #475569 #1e293b;
+}
+
+/* Force scrollbar to always be visible */
+::-webkit-scrollbar-thumb {
+  visibility: visible !important;
+}
+
+::-webkit-scrollbar-track {
+  visibility: visible !important;
+}
+
+/* Prevent scrollbar from disappearing on macOS */
+* {
+  overflow: overlay;
+}
+
+*::-webkit-scrollbar {
+  -webkit-appearance: none;
 }
 
 /* Remove focus outline from Recharts SVG elements */
