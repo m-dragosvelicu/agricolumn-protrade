@@ -11,9 +11,23 @@ export interface UserListItem {
   createdAt: string;
 }
 
+export interface UserDetail extends UserListItem {
+  updatedAt: string;
+}
+
 export const usersApi = {
   async getAllUsers(): Promise<UserListItem[]> {
     const response = await api.get<UserListItem[]>('/users');
+    return response.data;
+  },
+
+  async getUser(id: string): Promise<UserDetail> {
+    const response = await api.get<UserDetail>(`/users/${id}`);
+    return response.data;
+  },
+
+  async makeAdmin(id: string): Promise<UserDetail> {
+    const response = await api.patch<UserDetail>(`/users/${id}/promote`);
     return response.data;
   },
 };

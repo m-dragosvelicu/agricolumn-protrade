@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -19,35 +20,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  getWeeklyTradeData,
-  calculateYearOverYearChange,
-} from "@/lib/weeklyTradeData";
 import { colorForCommodity } from "@/lib/commodityColors";
+import {
+  dgAgriApi,
+  DGAgriMetadata,
+  DGAgriTradeType,
+  DGAgriWeeklySummaryResponse,
+} from "@/lib/api/dgAgri";
 
 interface EUWeeklyTradePanelProps {
   className?: string;
 }
 
-// Commodity definitions matching DG AGRI
-const commodities = [
-  { id: "WHEAT", label: "Wheat" },
-  { id: "BARLEY", label: "Barley" },
-  { id: "CORN", label: "Corn" },
-  { id: "RAPESEED", label: "Rapeseed" },
-  { id: "SUNFLOWER", label: "Sunflower" },
-  { id: "RAPESEED_OIL", label: "Rapeseed Oil" },
-  { id: "SUNFLOWER_OIL", label: "Sunflower Oil" },
-  { id: "SOYBEANS", label: "Soybeans" },
-  { id: "SOY_OIL", label: "Soy Oil" },
-  { id: "RPS_MEAL", label: "RPS Meal" },
-  { id: "SFS_MEAL", label: "SFS Meal" },
-  { id: "SOY_MEAL", label: "Soy Meal" },
-];
-
-// Helper to add alpha transparency to hex colors
 const withAlpha = (hex: string, alpha: number): string => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -55,85 +40,183 @@ const withAlpha = (hex: string, alpha: number): string => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+const calculatePercentChange = (current: number | null, previous: number | null) => {
+  if (current === null || previous === null || previous === 0) {
+    return 0;
+  }
+  return ((current - previous) / previous) * 100;
+};
+
 export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
-  const [tradeType, setTradeType] = useState<"Export" | "Import">("Export");
-  const [commodity, setCommodity] = useState("WHEAT");
+  const [metadata, setMetadata] = useState<DGAgriMetadata | null>(null);
+  const [metadataError, setMetadataError] = useState<string | null>(null);
+  const [commodity, setCommodity] = useState<string | null>(null);
+  const [tradeType, setTradeType] = useState<DGAgriTradeType>("Export");
+  const [summary, setSummary] = useState<DGAgriWeeklySummaryResponse | null>(
+    null,
+  );
+  const [isMetadataLoading, setMetadataLoading] = useState(true);
+  const [isSummaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
-  // Get commodity color
-  const baseColor = useMemo(() => colorForCommodity(commodity), [commodity]);
-  const lastYearColor = useMemo(() => withAlpha(baseColor, 0.45), [baseColor]);
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      setMetadataLoading(true);
+      setMetadataError(null);
+      try {
+        const response = await dgAgriApi.getMetadata();
+        setMetadata(response);
+        if (response.commodities.length > 0) {
+          const defaultCommodity = response.commodities[0];
+          setCommodity(defaultCommodity.id);
+          if (defaultCommodity.tradeTypes.includes("Export")) {
+            setTradeType("Export");
+          } else {
+            setTradeType(defaultCommodity.tradeTypes[0]);
+          }
+        }
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to load DG AGRI metadata.";
+        setMetadataError(message);
+      } finally {
+        setMetadataLoading(false);
+      }
+    };
 
-  // Get data for selected commodity and trade type
-  const weeklyData = getWeeklyTradeData(commodity, tradeType);
+    fetchMetadata();
+  }, []);
 
-  // Calculate percentage change
-  const percentChange = weeklyData
-    ? calculateYearOverYearChange(
-        weeklyData.thisYearVolume,
-        weeklyData.lastYearVolume
-      )
-    : 0;
+  useEffect(() => {
+    if (!commodity || !metadata) return;
+    const selected = metadata.commodities.find((comm) => comm.id === commodity);
+    if (selected && !selected.tradeTypes.includes(tradeType)) {
+      setTradeType(selected.tradeTypes[0]);
+    }
+  }, [commodity, metadata, tradeType]);
 
-  // Prepare chart data (horizontal bars)
-  const chartData = weeklyData
-    ? [
-        {
-          category: `${weeklyData.year}`,
-          value: weeklyData.thisYearVolume,
-          label: "This Year",
-          fill: baseColor,
-        },
-        {
-          category: `${weeklyData.year - 1}`,
-          value: weeklyData.lastYearVolume,
-          label: "Last Year",
-          fill: lastYearColor,
-        },
-      ]
-    : [];
+  useEffect(() => {
+    const fetchSummary = async () => {
+      if (!commodity) return;
+      setSummaryLoading(true);
+      setSummaryError(null);
 
-  // Calculate dynamic X-axis domain for clean display (horizontal chart)
-  const maxValue = weeklyData
-    ? Math.max(weeklyData.thisYearVolume, weeklyData.lastYearVolume)
+      try {
+        const response = await dgAgriApi.getWeeklySummary({
+          commodity,
+          tradeType,
+        });
+        setSummary(response);
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to load DG AGRI weekly summary.";
+        setSummaryError(message);
+        setSummary(null);
+      } finally {
+        setSummaryLoading(false);
+      }
+    };
+
+    fetchSummary();
+  }, [commodity, tradeType]);
+
+  const commodityOptions = metadata?.commodities ?? [];
+  const baseCommodityForColor = commodity ?? "WHEAT";
+  const baseColor = useMemo(
+    () => colorForCommodity(baseCommodityForColor),
+    [baseCommodityForColor],
+  );
+  const lastYearColor = useMemo(
+    () => withAlpha(baseColor, 0.45),
+    [baseColor],
+  );
+  const chartData =
+    summary && summary.thisYearVolume !== null
+      ? [
+          {
+            category: summary.marketingYear ?? "This Year",
+            value: summary.thisYearVolume ?? 0,
+            label: "This Year",
+            fill: baseColor,
+          },
+          ...(summary.lastYearVolume !== null
+            ? [
+                {
+                  category:
+                    summary.previousMarketingYear ??
+                    (summary.marketingYear
+                      ? `${summary.marketingYear} (prev)`
+                      : "Last Year"),
+                  value: summary.lastYearVolume ?? 0,
+                  label: "Last Year",
+                  fill: lastYearColor,
+                },
+              ]
+            : []),
+        ]
+      : [];
+
+  const maxValue = chartData.length
+    ? Math.max(...chartData.map((item) => item.value))
     : 0;
   const roundedMax = Math.ceil(maxValue / 10000) * 10000;
   const xAxisMax = roundedMax + 40000;
+  const percentChange = calculatePercentChange(
+    summary?.thisYearVolume ?? null,
+    summary?.lastYearVolume ?? null,
+  );
 
   return (
     <Card
       className={cn(
         "h-full flex flex-col bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50",
-        className
+        className,
       )}
     >
       <CardHeader className="border-b border-slate-700/50 pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <CardTitle className="text-white">
-                EU Weekly Trade Comparison
-              </CardTitle>
-              <Badge
-                variant="outline"
-                className="border-amber-500/50 text-amber-400 bg-amber-500/10"
-              >
-                DEMO
-              </Badge>
-            </div>
+            <CardTitle className="text-white">
+              EU Weekly Trade Comparison
+            </CardTitle>
             <p className="text-sm text-muted-foreground">
-              EU-wide {tradeType.toLowerCase()} volumes: Current week vs same
-              week last year
+              Current marketing week vs same week last year
             </p>
+            {summary?.weekLabel && (
+              <p className="text-xs text-slate-400 mt-2">
+                {summary.weekLabel}
+              </p>
+            )}
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="flex-1 p-0 flex flex-col">
-        {/* Trade Type Toggle (Export/Import) */}
         <div className="px-4 py-3 border-b border-slate-700/50">
           <Tabs
             value={tradeType}
-            onValueChange={(value) => setTradeType(value as "Export" | "Import")}
+            onValueChange={(value) => {
+              const next = value as DGAgriTradeType;
+              setTradeType(next);
+              const currentCommodity = commodityOptions.find(
+                (comm) => comm.id === commodity,
+              );
+              if (
+                !currentCommodity ||
+                !currentCommodity.tradeTypes.includes(next)
+              ) {
+                const fallback = commodityOptions.find((comm) =>
+                  comm.tradeTypes.includes(next),
+                );
+                if (fallback) {
+                  setCommodity(fallback.id);
+                }
+              }
+            }}
           >
             <TabsList className="w-full flex justify-center gap-2">
               <TabsTrigger value="Export" className="flex-1">
@@ -146,16 +229,20 @@ export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
           </Tabs>
         </div>
 
-        {/* Commodity Selection */}
         <div className="px-4 py-3 border-b border-slate-700/50">
-          {/* Mobile: Select dropdown */}
           <div className="block md:hidden">
-            <Select value={commodity} onValueChange={setCommodity}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
+            <Select
+              value={commodity ?? undefined}
+              onValueChange={(value) => setCommodity(value)}
+            >
+              <SelectTrigger
+                className="w-full"
+                disabled={isMetadataLoading || !commodityOptions.length}
+              >
+                <SelectValue placeholder="Select commodity" />
               </SelectTrigger>
               <SelectContent>
-                {commodities.map((c) => (
+                {commodityOptions.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.label}
                   </SelectItem>
@@ -164,10 +251,9 @@ export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
             </Select>
           </div>
 
-          {/* Desktop: Horizontal scrolling tabs */}
           <div className="hidden md:block overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
             <div className="flex gap-2 min-w-max">
-              {commodities.map((c) => (
+              {commodityOptions.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setCommodity(c.id)}
@@ -175,7 +261,7 @@ export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
                     "px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                     commodity === c.id
                       ? "bg-slate-700 text-white"
-                      : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+                      : "text-slate-400 hover:text-white hover:bg-slate-700/50",
                   )}
                 >
                   {c.label}
@@ -185,13 +271,29 @@ export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
           </div>
         </div>
 
-        {/* Chart Section */}
         <div className="flex-1 p-4">
-          {weeklyData ? (
+          {isMetadataLoading || isSummaryLoading ? (
+            <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+              Loading weekly trade data…
+            </div>
+          ) : metadataError ? (
+            <div className="flex items-center justify-center h-full text-red-300 text-sm text-center px-4">
+              {metadataError}
+            </div>
+          ) : summaryError ? (
+            <div className="flex items-center justify-center h-full text-red-300 text-sm text-center px-4">
+              {summaryError}
+            </div>
+          ) : chartData.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-slate-400 text-sm text-center px-4">
+              No weekly data available for this selection.
+            </div>
+          ) : (
             <div className="space-y-3">
-              {/* Week Label and Change Indicator */}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">{weeklyData.weekLabel}</span>
+                <span className="text-slate-400">
+                  {summary?.weekLabel ?? "Current week"}
+                </span>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400">YoY Change:</span>
                   <span
@@ -201,7 +303,7 @@ export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
                         ? "text-green-400"
                         : percentChange < 0
                           ? "text-red-400"
-                          : "text-slate-400"
+                          : "text-slate-400",
                     )}
                   >
                     {percentChange > 0 ? "+" : ""}
@@ -210,7 +312,6 @@ export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
                 </div>
               </div>
 
-              {/* Horizontal Bar Chart */}
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart
                   data={chartData}
@@ -259,14 +360,20 @@ export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
                     label={{
                       position: "right",
                       fill: "#ffffff",
-                      formatter: (value: any) => typeof value === 'number' ? value.toLocaleString() : value,
+                      formatter: (value: any) =>
+                        typeof value === "number"
+                          ? value.toLocaleString()
+                          : value,
                       fontSize: 12,
                     }}
-                  />
+                  >
+                    {chartData.map((entry) => (
+                      <Cell key={entry.category} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
 
-              {/* Legend */}
               <div className="flex items-center justify-center gap-6 text-sm pt-2">
                 <div className="flex items-center gap-2">
                   <div
@@ -283,15 +390,6 @@ export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
                   <span className="text-slate-300">Last Year</span>
                 </div>
               </div>
-
-              {/* Demo Data Notice */}
-              <div className="text-center text-xs text-amber-400/60 pt-2">
-                Demo data for visualization purposes
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-slate-400">
-              No data available
             </div>
           )}
         </div>

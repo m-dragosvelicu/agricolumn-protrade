@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     loadUsers();
@@ -134,7 +136,8 @@ export default function UsersPage() {
                   {filteredUsers.map((user) => (
                     <TableRow
                       key={user.id}
-                      className="border-slate-700 hover:bg-slate-800/50"
+                      className="border-slate-700 hover:bg-slate-800/50 cursor-pointer"
+                      onClick={() => router.push(`/admin/users/${user.id}`)}
                     >
                       <TableCell className="font-medium text-white">
                         <div className="flex items-center gap-2">
