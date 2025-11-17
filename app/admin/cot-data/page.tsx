@@ -1,122 +1,115 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileUpload } from '@/components/admin/FileUpload';
-import { Download, Upload, Table as TableIcon } from 'lucide-react';
-import { arrayToExcel, downloadExcel, parseExcel, validateExcelData, type ExcelColumn } from '@/lib/excelUtils';
-
-const cotDataColumns: ExcelColumn[] = [
-  { key: 'instrument', label: 'Instrument', example: 'CBOT Wheat', required: true },
-  { key: 'date', label: 'Date', example: '20.08.2025', required: true },
-  { key: 'price', label: 'Net Position', example: '-4261', required: true },
-];
-
-const COT_INSTRUMENTS = [
-  'CBOT Wheat',
-  'CBOT Corn',
-  'CBOT Soybean',
-  'Euronext Wheat',
-  'Euronext Corn',
-  'Euronext RPS',
-  'CBOT Soy Oil',
-];
+import { FileUpload, FileUploadRef } from '@/components/admin/FileUpload';
+import { Upload, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { cotCftcApi, CotCftcImportResult } from '@/lib/api/cotCftc';
 
 export default function COTDataAdmin() {
-  const [uploadedData, setUploadedData] = useState<any[]>([]);
-  const [errors, setErrors] = useState<string[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [importResult, setImportResult] = useState<CotCftcImportResult | null>(null);
+  const fileUploadRef = useRef<FileUploadRef>(null);
 
-  const handleDownloadTemplate = () => {
-    const templateRows = COT_INSTRUMENTS.map((instrument) => ({
-      instrument,
-      date: '',
-      price: '',
-    }));
-
-    const template = arrayToExcel(templateRows, cotDataColumns);
-    downloadExcel(template, 'cot-data-template.xlsx');
+  const handleFileSelect = (file: File) => {
+    setError(null);
+    setSelectedFile(file);
   };
 
-  const handleFileSelect = async (file: File) => {
-    setIsProcessing(true);
-    setErrors([]);
+  const handleFileRemove = () => {
+    setSelectedFile(null);
+    setError(null);
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) {
+      setError('Please select a file to upload.');
+      return;
+    }
+
+    setIsImporting(true);
+    setError(null);
 
     try {
-      const data = await parseExcel(file, cotDataColumns);
+      // Send the raw file directly to backend - no frontend parsing!
+      const formData = new FormData();
+      formData.append('file', selectedFile);
 
-      const validation = validateExcelData(data, cotDataColumns);
+      console.log('Uploading file:', {
+        name: selectedFile.name,
+        size: selectedFile.size,
+        type: selectedFile.type,
+      });
 
-      if (!validation.isValid) {
-        setErrors(validation.errors);
-        setUploadedData([]);
-      } else {
-        setUploadedData(data);
-        setErrors([]);
+      const response = await cotCftcApi.importData(formData);
+
+      console.log('Import successful:', response);
+
+      setImportResult(response);
+      setSuccessModalOpen(true);
+      setSelectedFile(null);
+      fileUploadRef.current?.clear();
+    } catch (err: any) {
+      console.error('Import error:', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+
+      let message = 'Import failed. Please verify the Excel file format and try again.';
+
+      // Extract backend error message if available
+      if (err.response?.data?.message) {
+        message = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        message = err.response.data.error;
+      } else if (err.message) {
+        message = err.message;
       }
-    } catch (error: any) {
-      setErrors([error.message || 'Failed to parse Excel file. Please check the format.']);
-      setUploadedData([]);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
-  const handleImport = () => {
-    console.log('Importing data:', uploadedData);
-    alert(`Successfully imported ${uploadedData.length} COT records!`);
-    setUploadedData([]);
+      setError(message);
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">COT CFTC Data</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">COT-CFTC Data</h1>
         <p className="text-slate-400">
-          Upload Commitment of Traders (COT) data from CFTC reports
+          Upload the official COT-CFTC Excel file with net positions data. The backend will automatically parse the unique alternating-row format.
         </p>
       </div>
 
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center">
-            <Download className="mr-2 h-5 w-5" />
-            Export Template
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-slate-400">
-            Download the COT data template. Instruments: CBOT Wheat, CBOT Corn, CBOT Soybean,
-            Euronext Wheat, Euronext Corn, Euronext RPS, CBOT Soy Oil.
-          </p>
-          <div className="bg-slate-900/50 border border-slate-700/80 rounded-lg p-4 space-y-3">
-            <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">How to complete the Excel file</h3>
-            <ol className="list-decimal list-inside text-sm text-slate-300 space-y-2">
-              <li>The template lists every accepted instrument – keep the instrument labels exactly as provided.</li>
-              <li>Insert a new row for each reporting date and instrument combination. Duplicate the instrument name for additional weeks.</li>
-              <li>Enter the report date using <code className="px-1 py-0.5 bg-slate-800 rounded">DD.MM.YYYY</code>.</li>
-              <li>Fill <span className="font-medium text-white">Net Position</span> as an integer (use minus sign for net short positions).</li>
-              <li>Save the file as Excel (.xlsx) before uploading.</li>
-            </ol>
-            <div>
-              <p className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-2">Allowed instrument labels</p>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-300">
-                {COT_INSTRUMENTS.map((instrument) => (
-                  <li key={instrument} className="bg-slate-800/60 border border-slate-700 rounded px-2 py-1">
-                    {instrument}
-                  </li>
-                ))}
-              </ul>
+      {/* Important Notice */}
+      <Card className="bg-blue-500/10 border-blue-500/50">
+        <CardContent className="pt-6">
+          <div className="flex gap-3">
+            <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-200 space-y-2">
+              <p className="font-semibold">Important: Unique Excel Format</p>
+              <p>
+                The COT-CFTC Excel file uses a special alternating-row structure with exchange and commodity data.
+                Simply upload the raw Excel file - the backend handles all parsing and validation automatically.
+              </p>
+              <p className="text-xs text-blue-300">
+                Expected structure: Exchange rows (CBOT/EURONEXT) alternate with commodity rows (WHEAT/CORN/SOY/RPS),
+                with dates in columns and values in cells.
+              </p>
             </div>
           </div>
-          <Button
-            onClick={handleDownloadTemplate}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Download Template Excel
-          </Button>
         </CardContent>
       </Card>
 
@@ -124,86 +117,115 @@ export default function COTDataAdmin() {
         <CardHeader>
           <CardTitle className="text-white flex items-center">
             <Upload className="mr-2 h-5 w-5" />
-            Upload Data
+            Upload COT-CFTC Excel File
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FileUpload onFileSelect={handleFileSelect} accept=".xlsx,.xls" />
+          <FileUpload
+            ref={fileUploadRef}
+            onFileSelect={handleFileSelect}
+            onFileRemove={handleFileRemove}
+            accept=".xlsx,.xls"
+          />
 
-          {isProcessing && (
-            <div className="text-center text-slate-400">Processing file...</div>
-          )}
-
-          {errors.length > 0 && (
-            <div className="bg-red-500/10 border border-red-500 rounded-lg p-4">
-              <h3 className="text-red-400 font-semibold mb-2">Validation Errors:</h3>
-              <ul className="list-disc list-inside space-y-1">
-                {errors.map((error, index) => (
-                  <li key={index} className="text-sm text-red-300">{error}</li>
-                ))}
-              </ul>
+          {error && (
+            <div className="flex items-center gap-3 rounded-lg border border-red-500/60 bg-red-500/10 p-4 text-sm text-red-200">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
-          {uploadedData.length > 0 && errors.length === 0 && (
+          {selectedFile && !error && (
             <div className="space-y-4">
               <div className="bg-green-500/10 border border-green-500 rounded-lg p-4">
                 <p className="text-green-400 font-semibold">
-                  ✓ Successfully parsed {uploadedData.length} records
+                  ✓ File ready: {selectedFile.name}
+                </p>
+                <p className="text-sm text-slate-400 mt-1">
+                  Size: {(selectedFile.size / 1024).toFixed(2)} KB
                 </p>
               </div>
+
+              <Separator className="bg-slate-700/70" />
+
+              <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-4 text-sm text-slate-300 space-y-2">
+                <p className="font-semibold text-slate-200 uppercase tracking-wide text-xs">
+                  Import Process
+                </p>
+                <ul className="space-y-1">
+                  <li>• Backend will parse the alternating exchange/commodity row structure</li>
+                  <li>• Excel serial dates will be converted to YYYY-MM-DD format</li>
+                  <li>• Records are upserted based on exchange + commodity + date combination</li>
+                  <li>• Existing records with matching keys will be updated</li>
+                </ul>
+              </div>
+
               <Button
                 onClick={handleImport}
+                disabled={isImporting}
                 className="w-full bg-amber-500 hover:bg-amber-600"
               >
-                Import {uploadedData.length} COT Records
+                {isImporting ? 'Importing…' : 'Import COT-CFTC Data'}
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {uploadedData.length > 0 && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <TableIcon className="mr-2 h-5 w-5" />
-              Data Preview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-700">
-                    {cotDataColumns.map(col => (
-                      <th key={col.key} className="text-left p-2 text-slate-400 font-medium">
-                        {col.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {uploadedData.slice(0, 15).map((row, index) => (
-                    <tr key={index} className="border-b border-slate-800">
-                      {cotDataColumns.map(col => (
-                        <td key={col.key} className="p-2 text-slate-300">
-                          {row[col.key] || '-'}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {uploadedData.length > 15 && (
-                <p className="text-sm text-slate-400 mt-2 text-center">
-                  Showing 15 of {uploadedData.length} records
+      {/* Success Modal */}
+      <Dialog
+        open={successModalOpen}
+        onOpenChange={(open) => {
+          setSuccessModalOpen(open);
+          if (!open) {
+            setImportResult(null);
+          }
+        }}
+      >
+        <DialogContent className="bg-slate-800 border-slate-700 text-white sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-400">
+              <CheckCircle2 className="h-5 w-5" />
+              COT-CFTC Data Imported
+            </DialogTitle>
+            <DialogDescription className="text-slate-300">
+              The COT-CFTC positions have been successfully imported and the dashboard data has been updated.
+            </DialogDescription>
+          </DialogHeader>
+
+          {importResult && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-4 text-sm text-slate-200">
+                <p className="font-medium text-slate-100">Summary</p>
+                <ul className="mt-2 space-y-1 text-slate-300">
+                  <li>• Total records processed: {importResult.total}</li>
+                  <li>• New records inserted: {importResult.inserted}</li>
+                  <li>• Existing records updated: {importResult.updated}</li>
+                </ul>
+              </div>
+
+              <div className="rounded-lg border border-amber-400/50 bg-amber-500/10 p-4 text-xs text-amber-200">
+                <p className="font-semibold uppercase tracking-wide text-amber-200">
+                  Next Steps
                 </p>
-              )}
+                <p>
+                  The COT-CFTC panel in the dashboard will now display the updated positions.
+                  Refresh the page to see the latest data.
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+
+          <DialogFooter>
+            <Button
+              onClick={() => setSuccessModalOpen(false)}
+              className="bg-amber-500 hover:bg-amber-600 text-white w-full"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
