@@ -45,22 +45,22 @@ export function arrayToExcel(data: any[], columns: ExcelColumn[], sheetName: str
  */
 export function generateTemplate(columns: ExcelColumn[], sheetName: string = 'Sheet1'): XLSX.WorkBook {
   const workbook = XLSX.utils.book_new();
-  
+
   // Create header row
   const headers = columns.map(col => col.label);
-  
+
   // Create example row
   const exampleRow = columns.map(col => col.example || '');
-  
+
   // Combine headers and example row
   const worksheetData = [headers, exampleRow];
-  
+
   // Create worksheet
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-  
+
   // Add worksheet to workbook
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-  
+
   return workbook;
 }
 
@@ -315,7 +315,7 @@ export function parseExcel(file: File, columns: ExcelColumn[]): Promise<any[]> {
                 rowObj[col.key] = '';
               } else if (typeof value === 'number') {
                 // Check if this is a date column and value looks like Excel serial date (typically > 1 and < 1000000)
-                const isDateColumn = ['eta', 'operation_commenced', 'operation_completed'].includes(col.key);
+                const isDateColumn = ['date', 'eta', 'operation_commenced', 'operation_completed'].includes(col.key);
                 if (isDateColumn && value > 1 && value < 1000000) {
                   // Excel serial date: days since 1900-01-01 (Excel incorrectly treats 1900 as leap year)
                   const excelEpoch = new Date(1900, 0, 1);
@@ -383,4 +383,3 @@ export function validateExcelData(data: any[], columns: ExcelColumn[]): {
     errors,
   };
 }
-

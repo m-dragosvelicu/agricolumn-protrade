@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { mockCOTData } from '@/lib/mockData';
 import { PanelHeader } from '@/components/layout/DashboardLayout';
 import { cn } from '@/lib/utils';
 import { calculateYAxisRange } from '@/lib/chartUtils';
@@ -34,123 +33,96 @@ export function COTPanel({ className }: COTPanelProps) {
   const [cotData, setCotData] = useState<Record<string, any[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [useMockData, setUseMockData] = useState(false);
 
-  const data = useMockData ? (mockCOTData[selectedCommodity] || []) : (cotData[selectedCommodity] || []);
+  const data = cotData[selectedCommodity] || [];
   const lineColor = useMemo(() => colorForCommodity(selectedCommodity), [selectedCommodity]);
 
-  // Fetch data from API
-  useEffect(() => {
-    const fetchCotData = async () => {
-      setIsLoading(true);
-      setError(null);
+  const mapPairsToSeries = (pairs: CotCftcPair[]) => {
+    const transformedData: Record<string, any[]> = {};
 
-      try {
-        const response = await cotCftcApi.getLatest({ limit: 7 });
+    pairs.forEach((pair: CotCftcPair) => {
+      const commodityConfig = COT_COMMODITIES.find(
+        c => c.exchange === pair.exchange && c.commodity === pair.commodity,
+      );
 
-        // Handle empty response (no data uploaded yet)
-        if (!response || response.length === 0) {
-          console.log('No COT-CFTC data available yet. Using demo data.');
-          setUseMockData(true);
-          setIsLoading(false);
-          return;
-        }
-
-        // Transform API response to match the existing data structure
-        const transformedData: Record<string, any[]> = {};
-
-        response.forEach((pair: CotCftcPair) => {
-          // Find the matching frontend commodity key
-          const commodityConfig = COT_COMMODITIES.find(
-            c => c.exchange === pair.exchange && c.commodity === pair.commodity
-          );
-
-          if (commodityConfig) {
-            // Transform positions to the expected format
-            transformedData[commodityConfig.value] = pair.positions.map(pos => ({
-              date: pos.date,
-              price: pos.value, // Backend uses "value", frontend expects "price"
-            }));
-          }
-        });
-
-        setCotData(transformedData);
-        setUseMockData(false);
-      } catch (err: any) {
-        console.error('Failed to fetch COT data:', err);
-        console.error('Error details:', {
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          message: err.response?.data?.message,
-          data: err.response?.data,
-          url: err.config?.url,
-          fullError: err,
-        });
-
-        // If it's a 500 error with no data, just use mock data silently
-        if (err.response?.status === 500) {
-          console.log('Backend error (likely no data uploaded yet). Using demo data.');
-          setUseMockData(true);
-          setError(null); // Don't show error to user
-        } else {
-          setError(err instanceof Error ? err.message : 'Failed to load COT data');
-          setUseMockData(true);
-        }
-      } finally {
-        setIsLoading(false);
+      if (commodityConfig) {
+        transformedData[commodityConfig.value] = pair.positions.map((pos) => ({
+          date: pos.date,
+          price: pos.value,
+        }));
       }
-    };
+    });
 
-    fetchCotData();
-  }, []);
+    return transformedData;
+  };
 
-  const handleRefresh = async () => {
+  const fetchFromLatest = async () => {
+    const response = await cotCftcApi.getLatest({ limit: 7 });
+    return mapPairsToSeries(response);
+  };
+
+  const fetchFromHistory = async () => {
+    const results = await Promise.allSettled(
+      COT_COMMODITIES.map((commodity) =>
+        cotCftcApi.getHistory({
+          exchange: commodity.exchange,
+          commodity: commodity.commodity,
+        }),
+      ),
+    );
+
+    const pairs: CotCftcPair[] = [];
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        pairs.push(result.value);
+      } else {
+        console.warn(
+          'Failed to fetch COT history for',
+          COT_COMMODITIES[index].exchange,
+          COT_COMMODITIES[index].commodity,
+          result.reason,
+        );
+      }
+    });
+
+    return mapPairsToSeries(pairs);
+  };
+
+  const loadCotData = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await cotCftcApi.getLatest({ limit: 7 });
+      const latestData = await fetchFromLatest();
 
-      // Handle empty response (no data uploaded yet)
-      if (!response || response.length === 0) {
-        console.log('No COT-CFTC data available yet. Using demo data.');
-        setUseMockData(true);
-        setIsLoading(false);
+      if (Object.keys(latestData).length > 0) {
+        setCotData(latestData);
         return;
       }
 
-      const transformedData: Record<string, any[]> = {};
-
-      response.forEach((pair: CotCftcPair) => {
-        const commodityConfig = COT_COMMODITIES.find(
-          c => c.exchange === pair.exchange && c.commodity === pair.commodity
-        );
-
-        if (commodityConfig) {
-          transformedData[commodityConfig.value] = pair.positions.map(pos => ({
-            date: pos.date,
-            price: pos.value,
-          }));
-        }
-      });
-
-      setCotData(transformedData);
-      setUseMockData(false);
+      const historyData = await fetchFromHistory();
+      setCotData(historyData);
     } catch (err: any) {
-      console.error('Failed to refresh COT data:', err);
-
-      // If it's a 500 error, likely no data exists yet
-      if (err.response?.status === 500) {
-        console.log('Backend error (likely no data uploaded yet). Using demo data.');
-        setUseMockData(true);
-        setError(null);
-      } else {
-        setError(err instanceof Error ? err.message : 'Failed to refresh COT data');
-        setUseMockData(true);
-      }
+      console.error('Failed to load COT data:', err);
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to load COT data from backend.';
+      setError(message);
+      setCotData({});
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Fetch data from API on mount
+  useEffect(() => {
+    loadCotData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleRefresh = async () => {
+    await loadCotData();
   };
 
   // Calculate smart Y-axis range with 5% padding
@@ -191,11 +163,6 @@ export function COTPanel({ className }: COTPanelProps) {
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
           </Button>
         </div>
-        {useMockData && (
-          <p className="text-xs text-slate-400 mt-1">
-            Using demo data • Upload COT-CFTC data in admin panel to see real positions
-          </p>
-        )}
         {error && (
           <p className="text-xs text-red-400 mt-1">
             {error}

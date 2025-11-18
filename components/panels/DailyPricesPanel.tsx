@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,11 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Star, TrendingUp, TrendingDown } from 'lucide-react';
 import { LightweightChart } from '@/components/charts/LightweightChart';
-import { mockPricesData, instrumentGroups } from '@/lib/mockData';
+// import { mockPricesData } from '@/lib/mockData';
+import { instrumentGroups } from '@/lib/mockData';
 import { colorForCommodity } from '@/lib/commodityColors';
 import { ChartInterval } from '@/types';
 import { PanelHeader } from '@/components/layout/DashboardLayout';
 import { cn } from '@/lib/utils';
+import { dailyPricesApi, type DailyPricesSeries } from '@/lib/api/dailyPrices';
 
 interface DailyPricesPanelProps {
   className?: string;
@@ -37,6 +39,8 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
   const [comparedInstruments, setComparedInstruments] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>(['wheatBread', 'corn']);
   const [isLoading, setIsLoading] = useState(false);
+  const [backendSeries, setBackendSeries] = useState<Record<string, { date: string; open: number; high: number; low: number; close: number; volume?: number }[]>>({});
+  const [backendError, setBackendError] = useState<string | null>(null);
 
 
   const commodities = [
@@ -44,8 +48,8 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
     { id: "wheatFeed", name: "Feed Wheat", currency: "EUR" },
     { id: "barley", name: "Feed Barley", currency: "EUR" },
     { id: "corn", name: "Corn", currency: "EUR" },
-    { id: "rapeseed", name: "Rapeseeds", currency: "EUR" },
     { id: "sunflower", name: "Sunflower Seeds", currency: "USD" },
+    { id: "rapeseed", name: "Rapeseeds", currency: "USD" },
     // { id: "SFS_FOB", name: "SFS FOB", currency: "USD" }
   ];
 
@@ -56,8 +60,114 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
     ...instrumentGroups.futures.MATIF,
   ];
 
+  const seriesIdByInstrument: Record<string, string> = {
+    wheatBread: 'WHEAT_BREAD',
+    wheatFeed: 'WHEAT_FEED',
+    barley: 'BARLEY',
+    corn: 'CORN',
+    sunflower: 'SUNFLOWER_SEEDS',
+    rapeseed: 'RAPESEEDS',
+  };
+
+  const instrumentBySeriesId: Record<string, string> = Object.entries(seriesIdByInstrument).reduce(
+    (acc, [instrument, seriesId]) => {
+      acc[seriesId] = instrument;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+
+  useEffect(() => {
+    const mapSeriesToCandles = (series: DailyPricesSeries[]) => {
+      const mapped: Record<string, { date: string; open: number; high: number; low: number; close: number; volume?: number }[]> = {};
+
+      series.forEach((s: DailyPricesSeries) => {
+        const instrumentId = instrumentBySeriesId[s.seriesId];
+        if (!instrumentId) return;
+
+        const points = [...s.points]
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .map((point) => ({
+            date: point.date,
+            open: point.value,
+            high: point.value,
+            low: point.value,
+            close: point.value,
+            volume: undefined,
+          }));
+
+        mapped[instrumentId] = points;
+      });
+
+      return mapped;
+    };
+
+    const fetchFromLatest = async () => {
+      const response = await dailyPricesApi.getLatest({ limit: 365 });
+      return mapSeriesToCandles(response);
+    };
+
+    const fetchFromHistory = async () => {
+      const seriesIds = Object.values(seriesIdByInstrument);
+      const results = await Promise.allSettled(
+        seriesIds.map((seriesId) =>
+          dailyPricesApi.getHistory({
+            seriesId,
+          }),
+        ),
+      );
+
+      const successfulSeries: DailyPricesSeries[] = [];
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          successfulSeries.push(result.value);
+        } else {
+          console.warn('Failed to fetch history for series', seriesIds[index], result.reason);
+        }
+      });
+
+      return mapSeriesToCandles(successfulSeries);
+    };
+
+    const fetchLatest = async () => {
+      setIsLoading(true);
+      setBackendError(null);
+      try {
+        // Primary: latest points for all configured series
+        const latestMapped = await fetchFromLatest();
+
+        if (Object.keys(latestMapped).length > 0) {
+          setBackendSeries(latestMapped);
+          return;
+        }
+
+        // Network fallback: fetch history from backend instead of using mock data
+        const historyMapped = await fetchFromHistory();
+        setBackendSeries(historyMapped);
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to load daily prices from backend.';
+        setBackendError(message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLatest();
+  }, []);
+
   const getFilteredData = (symbol: string, interval: ChartInterval) => {
-    const data = mockPricesData[symbol] || [];
+    const baseData =
+      backendSeries[symbol] && backendSeries[symbol]!.length > 0
+        ? backendSeries[symbol]!
+        : [];
+
+    if (baseData.length === 0) {
+      return [];
+    }
+
     const now = new Date();
     let startDate = new Date();
 
@@ -84,12 +194,12 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
         startDate.setFullYear(now.getFullYear() - 5);
         break;
       case 'MAX':
-        return data;
+        return baseData;
       default:
         startDate.setMonth(now.getMonth() - 3);
     }
 
-    return data.filter(d => new Date(d.date) >= startDate);
+    return baseData.filter(d => new Date(d.date) >= startDate);
   };
 
   // Get chart data for display
@@ -99,7 +209,7 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
       price: item.close,
       volume: item.volume
     }));
-  }, [selectedInstrument, selectedInterval]);
+  }, [selectedInstrument, selectedInterval, backendSeries]);
 
   const instrumentData = chartData.filter(item => item.price !== undefined).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const currentPrice = instrumentData.length > 0 ? instrumentData[instrumentData.length - 1].price : 0;
@@ -169,37 +279,46 @@ export function DailyPricesPanel({ className }: DailyPricesPanelProps) {
       {/* Chart - Second on mobile, left side on desktop */}
       <div className="order-2 lg:order-1 lg:col-span-2">
         <Card className="bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-yellow-500" />
-              DAILY PRICES CPT CONSTANTA
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+	          <CardHeader>
+	            <CardTitle className="text-white flex items-center gap-2">
+	              <TrendingUp className="w-5 h-5 text-yellow-500" />
+	              DAILY PRICES CPT CONSTANTA
+	            </CardTitle>
+	          </CardHeader>
+	          <CardContent>
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-slate-300">
                 {selectedCommodityData?.name} Price Chart
               </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Drag to pan • Scroll to zoom • Showing {chartData.length} data points
-              </p>
-            </div>
-            {isLoading ? (
-              <div className="h-96 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
-              </div>
-            ) : (
-              <LightweightChart
-                data={chartData}
-                color={selectedColor}
-                height={384}
-                unit={selectedUnit}
-              />
-            )}
+	              <p className="text-xs text-slate-500 mt-1">
+	                Drag to pan • Scroll to zoom • Showing {chartData.length} data points
+	              </p>
+	            </div>
+	            {isLoading ? (
+	              <div className="h-96 flex items-center justify-center">
+	                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
+	              </div>
+	            ) : chartData.length === 0 ? (
+	              <div className="h-96 flex flex-col items-center justify-center text-sm text-slate-400">
+	                <p>No daily price data available from the backend for this commodity.</p>
+	                {backendError && (
+	                  <p className="mt-2 text-xs text-red-400">
+	                    {backendError}
+	                  </p>
+	                )}
+	              </div>
+	            ) : (
+	              <LightweightChart
+	                data={chartData}
+	                color={selectedColor}
+	                height={384}
+	                unit={selectedUnit}
+	              />
+	            )}
 
-            {!isLoading && (
-              <div className="mt-4 flex items-center justify-between rounded-md border border-slate-700/60 bg-slate-800/40 px-4 py-3 text-sm">
-                <div className="text-slate-300">
+	            {!isLoading && chartData.length > 0 && (
+	              <div className="mt-4 flex items-center justify-between rounded-md border border-slate-700/60 bg-slate-800/40 px-4 py-3 text-sm">
+	                <div className="text-slate-300">
                   <div className="text-xs uppercase tracking-wide text-slate-400">Latest Price</div>
                   <div className="text-lg font-semibold text-white">
                     {currentPrice?.toFixed(2)} {selectedUnit}

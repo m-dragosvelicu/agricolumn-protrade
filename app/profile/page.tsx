@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Shield, LogOut, Lock } from 'lucide-react';
+import { Mail, Shield, LogOut, Lock, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import {
@@ -28,6 +29,7 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
+  const router = useRouter();
   const { user, logout } = useAuth();
   const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -72,6 +74,17 @@ function ProfileContent() {
   return (
     <div className="min-h-screen bg-slate-900 py-6 sm:py-10">
       <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
+        <div className="mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.back()}
+            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        </div>
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Profile</h1>
@@ -276,4 +289,3 @@ function ProfileContent() {
     </div>
   );
 }
-
