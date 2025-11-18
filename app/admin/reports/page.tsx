@@ -62,6 +62,19 @@ export default function ReportsAdmin() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [isRecommended, setIsRecommended] = useState(false);
 
+  // Inline edit state for uploaded (pre-import) reports
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editSummary, setEditSummary] = useState('');
+  const [editBody, setEditBody] = useState('');
+  const [editTagsInput, setEditTagsInput] = useState('');
+  const [editDateInput, setEditDateInput] = useState('');
+  const [editSlug, setEditSlug] = useState('');
+  const [editIsRecommended, setEditIsRecommended] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
   const loadReports = async () => {
     setIsLoadingExisting(true);
     setExistingError(null);
@@ -122,10 +135,145 @@ export default function ReportsAdmin() {
     }
   };
 
-  const handleImport = () => {
-    console.log('Importing data:', uploadedData);
-    alert(`Successfully imported ${uploadedData.length} reports!`);
-    setUploadedData([]);
+  const handleImport = async () => {
+    if (uploadedData.length === 0) return;
+
+    setIsImporting(true);
+    setErrors([]);
+
+    try {
+      const payload: CreateReportDto[] = uploadedData.map((row: any) => ({
+        title: String(row.title ?? '').trim(),
+        summary: String(row.summary ?? '').trim(),
+        body: String(row.body ?? '').trim(),
+        dateISO: String(row.dateISO ?? '').trim(),
+        tags: Array.isArray(row.tags)
+          ? row.tags
+          : row.tags
+            ? String(row.tags)
+                .split(',')
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : [],
+        slug: String(row.slug ?? '').trim(),
+        isRecommended: !!row.isRecommended,
+      }));
+
+      const result = await reportsApi.importReports(payload);
+
+      alert(
+        `Reports imported.\nTotal processed: ${result.total}\nInserted: ${result.inserted}\nUpdated: ${result.updated}`,
+      );
+
+      setUploadedData([]);
+      // Refresh existing reports list so newly imported ones appear
+      loadReports();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to import reports. Please check the Excel data and try again.';
+      setErrors([message]);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleOpenEditUploaded = (index: number) => {
+    const report = uploadedData[index];
+    if (!report) return;
+
+    setEditIndex(index);
+    setEditTitle(report.title || '');
+    setEditSummary(report.summary || '');
+    setEditBody(report.body || '');
+    setEditTagsInput(
+      Array.isArray(report.tags) ? report.tags.join(', ') : report.tags || '',
+    );
+
+    try {
+      const date = report.dateISO ? new Date(report.dateISO) : new Date();
+      if (Number.isNaN(date.getTime())) {
+        throw new Error('Invalid date');
+      }
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
+      setEditDateInput(local);
+    } catch {
+      const now = new Date();
+      const iso = new Date(
+        now.getTime() - now.getTimezoneOffset() * 60000,
+      ).toISOString();
+      setEditDateInput(iso.slice(0, 16));
+    }
+
+    setEditSlug(report.slug || '');
+    setEditIsRecommended(!!report.isRecommended);
+    setEditError(null);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEditUploaded = () => {
+    if (isProcessing) return;
+    setIsEditDialogOpen(false);
+    setEditError(null);
+    setEditIndex(null);
+  };
+
+  const handleSaveEditUploaded = () => {
+    if (editIndex === null) return;
+
+    const trimmedTitle = editTitle.trim();
+    const trimmedSummary = editSummary.trim();
+    const trimmedBody = editBody.trim();
+    const trimmedSlug = editSlug.trim();
+
+    if (!trimmedTitle || !trimmedSummary || !trimmedBody) {
+      setEditError('Title, summary, and body are required.');
+      return;
+    }
+
+    if (!editDateInput) {
+      setEditError('Please select a publish date.');
+      return;
+    }
+
+    if (!trimmedSlug) {
+      setEditError('Slug is required.');
+      return;
+    }
+
+    const date = new Date(editDateInput);
+    if (Number.isNaN(date.getTime())) {
+      setEditError('Publish date is invalid.');
+      return;
+    }
+
+    const parsedTags = editTagsInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    setUploadedData((prev) => {
+      return prev.map((item, idx) => {
+        if (idx !== editIndex) return item;
+        return {
+          ...item,
+          title: trimmedTitle,
+          summary: trimmedSummary,
+          body: trimmedBody,
+          slug: trimmedSlug,
+          dateISO: date.toISOString(),
+          tags: parsedTags,
+          isRecommended: editIsRecommended,
+        };
+      });
+    });
+
+    setIsEditDialogOpen(false);
+    setEditIndex(null);
+    setEditError(null);
   };
 
   const handleDeleteReport = async (report: Report) => {
@@ -314,9 +462,12 @@ export default function ReportsAdmin() {
               </div>
               <Button
                 onClick={handleImport}
+                disabled={isImporting}
                 className="w-full bg-amber-500 hover:bg-amber-600"
               >
-                Import {uploadedData.length} Reports
+                {isImporting
+                  ? 'Importing…'
+                  : `Import ${uploadedData.length} Reports`}
               </Button>
             </div>
           )}
@@ -339,12 +490,30 @@ export default function ReportsAdmin() {
                   className="border border-slate-700 rounded-lg p-4 space-y-2"
                 >
                   <div className="flex items-start justify-between">
-                    <h3 className="text-white font-semibold">{report.title}</h3>
-                    {report.isRecommended && (
-                      <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded">
-                        Recommended
-                      </span>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-white font-semibold line-clamp-1">
+                        {report.title}
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        {new Date(report.dateISO).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {report.isRecommended && (
+                        <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded">
+                          Recommended
+                        </span>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenEditUploaded(index)}
+                        className="h-7 px-2 text-xs border-slate-600 text-slate-200 hover:bg-slate-700"
+                      >
+                        Edit
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-sm text-slate-400 line-clamp-2">
                     {report.summary}
@@ -359,9 +528,6 @@ export default function ReportsAdmin() {
                       </span>
                     ))}
                   </div>
-                  <p className="text-xs text-slate-500">
-                    {new Date(report.dateISO).toLocaleDateString()}
-                  </p>
                 </div>
               ))}
               {uploadedData.length > 5 && (
@@ -631,6 +797,121 @@ export default function ReportsAdmin() {
               className="bg-amber-500 hover:bg-amber-600 text-white"
             >
               {isSubmitting ? 'Saving…' : 'Save Report'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit dialog for uploaded (pre-import) reports */}
+      <Dialog open={isEditDialogOpen} onOpenChange={handleCloseEditUploaded}>
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Edit Uploaded Report</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Title</label>
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Report title"
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Summary</label>
+              <textarea
+                value={editSummary}
+                onChange={(e) => setEditSummary(e.target.value)}
+                placeholder="Short summary"
+                rows={3}
+                className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Body</label>
+              <textarea
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value)}
+                placeholder="Full article content"
+                rows={6}
+                className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tags (comma-separated)</label>
+              <Input
+                value={editTagsInput}
+                onChange={(e) => setEditTagsInput(e.target.value)}
+                placeholder="WHEAT, EU, Weather"
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Publish Date</label>
+                <Input
+                  type="datetime-local"
+                  value={editDateInput}
+                  onChange={(e) => setEditDateInput(e.target.value)}
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Slug</label>
+                <Input
+                  value={editSlug}
+                  onChange={(e) => setEditSlug(e.target.value)}
+                  placeholder="wheat-futures-rise-eu-weather"
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditIsRecommended((prev) => !prev)}
+                className={`inline-flex items-center rounded-md border px-3 py-1 text-xs font-medium transition-colors ${
+                  editIsRecommended
+                    ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+                    : 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                <span
+                  className={`mr-2 h-3 w-3 rounded-full border ${
+                    editIsRecommended ? 'border-amber-400 bg-amber-400' : 'border-slate-500'
+                  }`}
+                />
+                Mark as recommended
+              </button>
+            </div>
+
+            {editError && (
+              <p className="text-sm text-red-400">{editError}</p>
+            )}
+          </div>
+
+          <DialogFooter className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseEditUploaded}
+              className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSaveEditUploaded}
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>

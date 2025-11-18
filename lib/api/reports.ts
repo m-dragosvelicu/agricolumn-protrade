@@ -28,6 +28,12 @@ export interface ReportsListResponse {
   limit: number;
 }
 
+export interface ReportsImportResult {
+  total: number;
+  inserted: number;
+  updated: number;
+}
+
 export const reportsApi = {
   async createReport(payload: CreateReportDto): Promise<Report> {
     const response = await api.post<Report>('/reports', payload);
@@ -44,6 +50,13 @@ export const reportsApi = {
   async getLatest(params?: ReportsListQuery): Promise<Report[]> {
     const response = await api.get<Report[]>('/reports/latest', {
       params,
+    });
+    return response.data;
+  },
+
+  async importReports(reports: CreateReportDto[]): Promise<ReportsImportResult> {
+    const response = await api.post<ReportsImportResult>('/reports/import', {
+      reports,
     });
     return response.data;
   },
