@@ -16,6 +16,20 @@ export interface BillingState {
   isCancelling: boolean;
   isCancellingChange: boolean;
   localError: string | null;
+  billingInfo: {
+    id: string;
+    fullName: string;
+    country: string;
+    addressLine1: string;
+    addressLine2?: string;
+    postalCode: string;
+    city: string;
+    taxIdType?: string;
+    taxIdValue?: string;
+  } | null;
+  billingInfoLoading: boolean;
+  billingInfoError: string | null;
+  isSavingBillingInfo: boolean;
 }
 
 // ViewModel Computed Values
@@ -35,6 +49,17 @@ export interface BillingActions {
   navigateBack: () => void;
   navigateToPricing: () => void;
   formatDate: (value?: string) => string;
+  reloadBillingInfo: () => Promise<void>;
+  saveBillingInfo: (data: {
+    fullName: string;
+    country: string;
+    addressLine1: string;
+    addressLine2?: string;
+    postalCode: string;
+    city: string;
+    taxIdType?: string;
+    taxIdValue?: string;
+  }) => Promise<void>;
 }
 
 // Complete ViewModel interface

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { subscriptionsApi } from '@/lib/api/subscriptions';
-import type { SubscriptionPlan } from '@/types/subscription';
+import type { SubscriptionPlan, BillingInfo, CreateBillingInfoDto } from '@/types/subscription';
 import { useAuth } from '@/lib/auth/auth-context';
 import {
   Card,
@@ -16,6 +16,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { BillingForm } from '@/components/subscriptions/BillingForm';
+import { BillingSummary } from '@/components/subscriptions/BillingSummary';
 
 export default function PricingPage() {
   const router = useRouter();
@@ -31,6 +40,12 @@ export default function PricingPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [submittingPlanId, setSubmittingPlanId] = useState<string | null>(null);
+  const [billingDialogOpen, setBillingDialogOpen] = useState(false);
+  const [billingPlanId, setBillingPlanId] = useState<string | null>(null);
+  const [billingInfoInitial, setBillingInfoInitial] = useState<BillingInfo | null>(null);
+  const [billingInfoLoading, setBillingInfoLoading] = useState(false);
+  const [billingEditing, setBillingEditing] = useState(false);
+  const [billingSubmitting, setBillingSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -85,10 +100,21 @@ export default function PricingPage() {
           }" at your next renewal (${new Date(effective).toLocaleDateString()}).`,
         );
       } else {
-        const { paymentUrl } = await subscriptionsApi.createSubscription(planId);
-        if (typeof window !== 'undefined') {
-          window.location.href = paymentUrl;
+        setBillingPlanId(planId);
+        setBillingDialogOpen(true);
+        setBillingInfoLoading(true);
+        try {
+          const existing = await subscriptionsApi.getBillingInfo();
+          setBillingInfoInitial(existing);
+          setBillingEditing(!existing);
+        } catch {
+          setBillingInfoInitial(null);
+          setBillingEditing(true);
+        } finally {
+          setBillingInfoLoading(false);
         }
+        setSubmittingPlanId(null);
+        return;
       }
     } catch (err: any) {
       const message =
@@ -103,9 +129,71 @@ export default function PricingPage() {
     setSubmittingPlanId(null);
   };
 
+  const handleBillingSubmit = async (data: CreateBillingInfoDto) => {
+    if (!billingPlanId) return;
+    setBillingSubmitting(true);
+    setError(null);
+
+    try {
+      const { paymentUrl } = await subscriptionsApi.createSubscription(
+        billingPlanId,
+        data,
+      );
+      setBillingDialogOpen(false);
+      setBillingPlanId(null);
+      setBillingInfoInitial(null);
+      setBillingEditing(false);
+      setBillingSubmitting(false);
+      if (typeof window !== 'undefined') {
+        window.location.href = paymentUrl;
+      }
+    } catch (err: any) {
+      const apiError = err?.response?.data;
+      const message = Array.isArray(apiError?.message)
+        ? apiError.message.join(' ')
+        : apiError?.message ||
+          err?.message ||
+          'Failed to start subscription. Please check your billing details and try again.';
+      setError(message);
+      setBillingSubmitting(false);
+      return;
+    }
+  };
+
+  const handleUseExistingBilling = async () => {
+    if (!billingPlanId) return;
+    setError(null);
+    setBillingSubmitting(true);
+
+    try {
+      const { paymentUrl } = await subscriptionsApi.createSubscription(
+        billingPlanId,
+      );
+      setBillingDialogOpen(false);
+      setBillingPlanId(null);
+      setBillingInfoInitial(null);
+      setBillingEditing(false);
+      setBillingSubmitting(false);
+      if (typeof window !== 'undefined') {
+        window.location.href = paymentUrl;
+      }
+    } catch (err: any) {
+      const apiError = err?.response?.data;
+      const message =
+        (Array.isArray(apiError?.message)
+          ? apiError.message.join(' ')
+          : apiError?.message) ||
+        err?.message ||
+        'Failed to start subscription. Please try again.';
+      setError(message);
+      setBillingSubmitting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-900 py-10">
-      <div className="container mx-auto px-4 sm:px-6 max-w-5xl">
+    <>
+      <div className="min-h-screen bg-slate-900 py-10">
+        <div className="container mx-auto px-4 sm:px-6 max-w-5xl">
         <div className="mb-4 flex justify-start">
           <button
             onClick={() => router.back()}
@@ -141,7 +229,7 @@ export default function PricingPage() {
           </Alert>
         )}
 
-        {loading ? (
+          {loading ? (
           <div className="flex items-center justify-center py-16 text-slate-300">
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             <span>Loading plans...</span>
@@ -224,8 +312,54 @@ export default function PricingPage() {
               );
             })}
           </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+      <Dialog
+        open={billingDialogOpen}
+        onOpenChange={(open) => {
+          setBillingDialogOpen(open);
+          if (!open) {
+            setBillingPlanId(null);
+            setBillingInfoInitial(null);
+          }
+        }}
+      >
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Billing information</DialogTitle>
+            <DialogDescription className="text-slate-300">
+              We use this information on your invoices and tax receipts. Make sure it matches your legal business or personal details.
+            </DialogDescription>
+          </DialogHeader>
+          {billingInfoLoading ? (
+            <div className="flex items-center justify-center py-8 text-slate-300">
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              <span>Loading billing information...</span>
+            </div>
+          ) : billingInfoInitial && !billingEditing ? (
+            <BillingSummary
+              billingInfo={billingInfoInitial}
+              isSubmitting={billingSubmitting}
+              onEdit={() => setBillingEditing(true)}
+              onContinue={handleUseExistingBilling}
+            />
+          ) : (
+            <BillingForm
+              initialData={billingInfoInitial || undefined}
+              onSubmit={handleBillingSubmit}
+              onCancel={() => {
+                setBillingDialogOpen(false);
+                setBillingPlanId(null);
+                setBillingInfoInitial(null);
+                setBillingEditing(false);
+              }}
+              isSubmitting={billingSubmitting}
+              submitLabel="Continue to payment"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

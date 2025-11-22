@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { subscriptionsApi } from '@/lib/api/subscriptions';
 import { reportGlobalError } from '@/components/ui/global-banner';
+import type { CreateBillingInfoDto } from '@/types/subscription';
 import type { BillingViewModel } from '@/types/viewModels/billing.types';
 
 /**
@@ -19,6 +20,10 @@ export function useBillingViewModel(): BillingViewModel {
   const [isCancelling, setIsCancelling] = useState(false);
   const [isCancellingChange, setIsCancellingChange] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [billingInfo, setBillingInfo] = useState<BillingViewModel['billingInfo']>(null);
+  const [billingInfoLoading, setBillingInfoLoading] = useState(false);
+  const [billingInfoError, setBillingInfoError] = useState<string | null>(null);
+  const [isSavingBillingInfo, setIsSavingBillingInfo] = useState(false);
 
   // Computed: status label
   const statusLabel = useMemo(() => {
@@ -49,6 +54,28 @@ export function useBillingViewModel(): BillingViewModel {
   const hasScheduledChange = useMemo(() => {
     return Boolean(subscription?.pendingPlan && subscription.pendingPlan.id);
   }, [subscription]);
+
+  const reloadBillingInfo = useCallback(async () => {
+    setBillingInfoLoading(true);
+    setBillingInfoError(null);
+    try {
+      const info = await subscriptionsApi.getBillingInfo();
+      setBillingInfo(info);
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to load billing information.';
+      setBillingInfo(null);
+      setBillingInfoError(message);
+    } finally {
+      setBillingInfoLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void reloadBillingInfo();
+  }, [reloadBillingInfo]);
 
   // Actions
   const handleCancel = useCallback(async () => {
@@ -90,6 +117,30 @@ export function useBillingViewModel(): BillingViewModel {
     }
   }, [refreshUser]);
 
+  const saveBillingInfo = useCallback(
+    async (data: CreateBillingInfoDto) => {
+      setIsSavingBillingInfo(true);
+      setBillingInfoError(null);
+      try {
+        const updated = await subscriptionsApi.upsertBillingInfo(data);
+        setBillingInfo(updated);
+      } catch (err: any) {
+        const apiError = err?.response?.data;
+        const message =
+          (Array.isArray(apiError?.message)
+            ? apiError.message.join(' ')
+            : apiError?.message) ||
+          err?.message ||
+          'Failed to save billing information. Please check your details and try again.';
+        setBillingInfoError(message);
+        reportGlobalError(message);
+      } finally {
+        setIsSavingBillingInfo(false);
+      }
+    },
+    [],
+  );
+
   const navigateBack = useCallback(() => {
     router.back();
   }, [router]);
@@ -115,6 +166,10 @@ export function useBillingViewModel(): BillingViewModel {
     isCancelling,
     isCancellingChange,
     localError,
+    billingInfo,
+    billingInfoLoading,
+    billingInfoError,
+    isSavingBillingInfo,
 
     // Computed
     statusLabel,
@@ -130,5 +185,7 @@ export function useBillingViewModel(): BillingViewModel {
     navigateBack,
     navigateToPricing,
     formatDate,
+    reloadBillingInfo,
+    saveBillingInfo,
   };
 }

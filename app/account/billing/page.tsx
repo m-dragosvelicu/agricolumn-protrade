@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useBillingViewModel } from '@/hooks/viewModels';
+import { BillingForm } from '@/components/subscriptions/BillingForm';
 
 export default function BillingPage() {
   return (
@@ -58,6 +59,16 @@ function BillingContent() {
           onCancel={vm.handleCancel}
           onCancelScheduledChange={vm.handleCancelScheduledChange}
           onChangePlan={vm.navigateToPricing}
+        />
+
+        {/* Billing Info Card */}
+        <BillingInfoCard
+          billingInfo={vm.billingInfo}
+          loading={vm.billingInfoLoading}
+          error={vm.billingInfoError}
+          isSaving={vm.isSavingBillingInfo}
+          reload={vm.reloadBillingInfo}
+          onSave={vm.saveBillingInfo}
         />
       </div>
     </div>
@@ -379,5 +390,81 @@ function SubscriptionActions({
         </Button>
       )}
     </div>
+  );
+}
+
+interface BillingInfoCardProps {
+  billingInfo: any;
+  loading: boolean;
+  error: string | null;
+  isSaving: boolean;
+  reload: () => Promise<void>;
+  onSave: (data: {
+    fullName: string;
+    country: string;
+    addressLine1: string;
+    addressLine2?: string;
+    postalCode: string;
+    city: string;
+    taxIdType?: string;
+    taxIdValue?: string;
+  }) => Promise<void>;
+}
+
+function BillingInfoCard({
+  billingInfo,
+  loading,
+  error,
+  isSaving,
+  reload,
+  onSave,
+}: BillingInfoCardProps) {
+  return (
+    <Card className="bg-slate-800 border-slate-700">
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div>
+          <CardTitle className="text-white">Billing information</CardTitle>
+          <CardDescription className="text-slate-400">
+            Details used on your invoices and tax receipts. Make sure they match your legal business or personal information.
+          </CardDescription>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-slate-600 text-slate-200 hover:bg-slate-700"
+          onClick={() => {
+            void reload();
+          }}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            'Refresh'
+          )}
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {loading && !billingInfo ? (
+          <div className="flex items-center justify-center py-6 text-slate-300">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <span>Loading billing information...</span>
+          </div>
+        ) : (
+          <BillingForm
+            initialData={billingInfo || undefined}
+            onSubmit={onSave}
+            isSubmitting={isSaving}
+            submitLabel="Save billing information"
+          />
+        )}
+      </CardContent>
+    </Card>
   );
 }

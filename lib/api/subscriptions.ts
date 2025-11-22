@@ -2,6 +2,8 @@ import api from '@/lib/api/client';
 import type {
   Subscription,
   SubscriptionPlan,
+  BillingInfo,
+  CreateBillingInfoDto,
 } from '@/types/subscription';
 
 export const subscriptionsApi = {
@@ -19,10 +21,15 @@ export const subscriptionsApi = {
 
   async createSubscription(
     planId: string,
+    billingInfo?: CreateBillingInfoDto,
   ): Promise<{ paymentUrl: string }> {
+    const payload: Record<string, unknown> = { planId };
+    if (billingInfo) {
+      payload.billingInfo = billingInfo;
+    }
     const response = await api.post<{ paymentUrl: string }>(
       '/subscriptions',
-      { planId },
+      payload,
     );
     return response.data;
   },
@@ -50,5 +57,22 @@ export const subscriptionsApi = {
       '/subscriptions/me/pending-plan',
     );
     return response.data;
+  },
+
+  async getBillingInfo(): Promise<BillingInfo | null> {
+    const response = await api.get<{ billingInfo: BillingInfo | null }>(
+      '/subscriptions/billing-info',
+    );
+    return response.data.billingInfo;
+  },
+
+  async upsertBillingInfo(
+    data: CreateBillingInfoDto,
+  ): Promise<BillingInfo> {
+    const response = await api.put<{ billingInfo: BillingInfo }>(
+      '/subscriptions/billing-info',
+      data,
+    );
+    return response.data.billingInfo;
   },
 };
