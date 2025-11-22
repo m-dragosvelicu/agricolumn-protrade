@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { authApi } from '@/lib/api/auth';
+import type { AuthSession } from '@/types/auth';
 import type { ProfileViewModel } from '@/types/viewModels/profile.types';
 
 /**
@@ -19,6 +20,10 @@ export function useProfileViewModel(): ProfileViewModel {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [sessions, setSessions] = useState<AuthSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [logoutOthersLoading, setLogoutOthersLoading] = useState(false);
 
   // Computed: initials from email
   const initials = useMemo(() => {
@@ -74,6 +79,64 @@ export function useProfileViewModel(): ProfileViewModel {
     }
   }, []);
 
+  const reloadSessions = useCallback(async () => {
+    if (!user) {
+      setSessions([]);
+      return;
+    }
+
+    setSessionsLoading(true);
+    setSessionsError(null);
+
+    try {
+      const data = await authApi.getSessions();
+      setSessions(data);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 403 || status === 404) {
+        // Sessions endpoint not available or not permitted; fail silently
+        setSessions([]);
+        setSessionsError(null);
+      } else {
+        setSessions([]);
+        setSessionsError(
+          err?.response?.data?.message ||
+            'Failed to load active sessions. Please try again.',
+        );
+      }
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      void reloadSessions();
+    } else {
+      setSessions([]);
+    }
+  }, [user, reloadSessions]);
+
+  const logoutOtherSessions = useCallback(async () => {
+    if (!user) return;
+    setSessionsError(null);
+    setLogoutOthersLoading(true);
+    try {
+      await authApi.logoutOthers();
+      await reloadSessions();
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status !== 403 && status !== 404) {
+        setSessionsError(
+          err?.response?.data?.message ||
+            'Failed to log out other devices. Please try again.',
+        );
+      }
+    } finally {
+      setLogoutOthersLoading(false);
+    }
+  }, [user, reloadSessions]);
+
   const logout = useCallback(() => {
     authLogout();
   }, [authLogout]);
@@ -105,6 +168,10 @@ export function useProfileViewModel(): ProfileViewModel {
     isLoading,
     error,
     success,
+    sessions,
+    sessionsLoading,
+    sessionsError,
+    logoutOthersLoading,
 
     // Computed
     initials,
@@ -121,5 +188,7 @@ export function useProfileViewModel(): ProfileViewModel {
     navigateBack,
     navigateToBilling,
     formatDate,
+    reloadSessions,
+    logoutOtherSessions,
   };
 }

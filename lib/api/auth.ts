@@ -6,6 +6,9 @@ import {
   ForgotPasswordData,
   ResetPasswordData,
   User,
+  AuthSession,
+  LogoutResponse,
+  LogoutOthersResponse,
 } from '@/types/auth';
 
 export const authApi = {
@@ -52,6 +55,21 @@ export const authApi = {
       '/auth/verify-email',
       data,
     );
+    return response.data;
+  },
+
+  async logout(): Promise<LogoutResponse> {
+    const response = await api.post<LogoutResponse>('/auth/logout');
+    return response.data;
+  },
+
+  async logoutOthers(): Promise<LogoutOthersResponse> {
+    const response = await api.post<LogoutOthersResponse>('/auth/logout-others');
+    return response.data;
+  },
+
+  async getSessions(): Promise<AuthSession[]> {
+    const response = await api.get<AuthSession[]>('/auth/sessions');
     return response.data;
   },
 };

@@ -33,6 +33,8 @@ export interface AuthResponse {
 export interface LoginCredentials {
   email: string;
   password: string;
+  deviceName?: string;
+  forceLogoutOthers?: boolean;
 }
 
 export interface RegisterData {
@@ -53,4 +55,24 @@ export interface ResetPasswordData {
 
 export interface VerifyEmailData {
   token: string;
+}
+
+export interface AuthSession {
+  id: string;
+  sessionId: string;
+  deviceName: string | null;
+  userAgent: string | null;
+  ipAddress: string | null;
+  createdAt: string;
+  lastActiveAt: string | null;
+  isCurrent: boolean;
+}
+
+export interface LogoutResponse {
+  message: string;
+}
+
+export interface LogoutOthersResponse {
+  message: string;
+  revokedCount: number;
 }

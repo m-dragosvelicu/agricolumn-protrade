@@ -21,9 +21,13 @@ interface AuthContextType {
   isAuthenticated: boolean;
   hasActiveSubscription: boolean;
   isInTrial: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    options?: { deviceName?: string; forceLogoutOthers?: boolean },
+  ) => Promise<void>;
   register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
 }
@@ -68,8 +72,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUser();
   }, [loadUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const response = await authApi.login({ email, password });
+  const login = useCallback(
+    async (
+      email: string,
+      password: string,
+      options?: { deviceName?: string; forceLogoutOthers?: boolean },
+    ) => {
+      const response = await authApi.login({
+        email,
+        password,
+        deviceName: options?.deviceName,
+        forceLogoutOthers: options?.forceLogoutOthers,
+      });
     apiClient.setAuthToken(response.access_token);
     setUser(response.user as User);
     try {
@@ -107,12 +121,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  const logout = useCallback(() => {
-    apiClient.removeAuthToken();
-    setUser(null);
-    setSubscription(null);
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.error('Failed to logout from server:', error);
+    } finally {
+      apiClient.removeAuthToken();
+      setUser(null);
+      setSubscription(null);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
   }, []);
 

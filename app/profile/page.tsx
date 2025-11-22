@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useProfileViewModel } from '@/hooks/viewModels';
+import type { AuthSession } from '@/types/auth';
 
 export default function ProfilePage() {
   return (
@@ -78,7 +79,16 @@ function ProfileContent() {
           <AccountInfoCard user={vm.user} />
 
           {/* Security Card */}
-          <SecurityCard onChangePassword={vm.openChangePasswordDialog} />
+          <SecurityCard
+            onChangePassword={vm.openChangePasswordDialog}
+            sessions={vm.sessions}
+            sessionsLoading={vm.sessionsLoading}
+            sessionsError={vm.sessionsError}
+            logoutOthersLoading={vm.logoutOthersLoading}
+            onReloadSessions={vm.reloadSessions}
+            onLogoutOthers={vm.logoutOtherSessions}
+            formatDate={vm.formatDate}
+          />
         </div>
       </div>
 
@@ -323,9 +333,27 @@ function AccountInfoCard({ user }: AccountInfoCardProps) {
 
 interface SecurityCardProps {
   onChangePassword: () => void;
+  sessions: AuthSession[];
+  sessionsLoading: boolean;
+  sessionsError: string | null;
+  logoutOthersLoading: boolean;
+  onReloadSessions: () => Promise<void>;
+  onLogoutOthers: () => Promise<void>;
+  formatDate: (value?: string) => string;
 }
 
-function SecurityCard({ onChangePassword }: SecurityCardProps) {
+function SecurityCard({
+  onChangePassword,
+  sessions,
+  sessionsLoading,
+  sessionsError,
+  logoutOthersLoading,
+  onReloadSessions,
+  onLogoutOthers,
+  formatDate,
+}: SecurityCardProps) {
+  const hasOtherSessions = sessions.some((session) => !session.isCurrent);
+
   return (
     <Card className="bg-slate-800 border-slate-700">
       <CardHeader>
@@ -350,6 +378,100 @@ function SecurityCard({ onChangePassword }: SecurityCardProps) {
               <Lock className="w-4 h-4" />
               Change Password
             </button>
+          </div>
+
+          <div className="flex flex-col gap-3 p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-white">Active sessions</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Manage the devices that are currently logged in to your account.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                onClick={() => {
+                  void onReloadSessions();
+                }}
+                disabled={sessionsLoading}
+              >
+                {sessionsLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Refresh'
+                )}
+              </Button>
+            </div>
+
+            {sessionsError && (
+              <p className="text-xs text-red-400">{sessionsError}</p>
+            )}
+
+            <div className="space-y-2">
+              {sessionsLoading && sessions.length === 0 ? (
+                <p className="text-sm text-slate-400">Loading sessions…</p>
+              ) : sessions.length === 0 ? (
+                <p className="text-sm text-slate-400">
+                  No active sessions found.
+                </p>
+              ) : (
+                sessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border border-slate-700/60 rounded-md px-3 py-2 bg-slate-900/60"
+                  >
+                    <div className="space-y-0.5">
+                      <p className="text-sm text-white">
+                        {session.deviceName || 'Unknown device'}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Last active:{' '}
+                        {session.lastActiveAt
+                          ? formatDate(session.lastActiveAt)
+                          : 'Unknown'}
+                      </p>
+                      {session.ipAddress && (
+                        <p className="text-xs text-slate-500">
+                          IP: {session.ipAddress}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {session.isCurrent && (
+                        <Badge
+                          variant="outline"
+                          className="border-emerald-500 text-emerald-300"
+                        >
+                          Current device
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                className="border-red-600/70 text-red-300 hover:bg-red-900/40"
+                onClick={() => {
+                  void onLogoutOthers();
+                }}
+                disabled={!hasOtherSessions || logoutOthersLoading}
+              >
+                {logoutOthersLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Logging out others…
+                  </>
+                ) : (
+                  'Logout all other devices'
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>

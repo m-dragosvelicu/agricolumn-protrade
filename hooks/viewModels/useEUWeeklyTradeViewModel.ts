@@ -9,6 +9,7 @@ import {
 } from '@/lib/api/dgAgri';
 import { colorForCommodity } from '@/lib/commodityColors';
 import type { EUWeeklyTradeViewModel, EUWeeklyTradeChartDataPoint } from '@/types/viewModels/euWeeklyTrade.types';
+import { COMMODITY_ORDER } from './useConstantaPortViewModel';
 
 // Helper functions
 const withAlpha = (hex: string, alpha: number): string => {
@@ -24,6 +25,73 @@ const calculatePercentChange = (current: number | null, previous: number | null)
   }
   return ((current - previous) / previous) * 100;
 };
+
+const getDGAgriCommodityRank = (id: string, label: string): number => {
+  const upperId = (id ?? '').toUpperCase();
+  const upperLabel = (label ?? '').toUpperCase();
+  const text = `${upperId} ${upperLabel}`;
+
+  const indexForKey = (key: string) =>
+    COMMODITY_ORDER.findIndex((c) => c.key === key);
+
+  const directIndex = indexForKey(upperId);
+  if (directIndex !== -1) return directIndex;
+
+  if (text.includes('WHEAT')) {
+    const idx = indexForKey('WHEAT');
+    if (idx !== -1) return idx;
+  }
+  if (text.includes('CORN') || text.includes('MAIZE')) {
+    const idx = indexForKey('CORN');
+    if (idx !== -1) return idx;
+  }
+  if (text.includes('BARLEY')) {
+    const idx = indexForKey('BARLEY');
+    if (idx !== -1) return idx;
+  }
+
+  const hasRapeseed =
+    text.includes('RAPESEED') || text.includes('CANOLA') || text.includes('RPS');
+  const hasSunflower =
+    text.includes('SUNFLOWER') || text.includes('SFS');
+
+  if (hasRapeseed && text.includes('MEAL')) {
+    const idx = indexForKey('RPS_MEAL');
+    if (idx !== -1) return idx;
+  }
+  if (hasRapeseed && text.includes('OIL')) {
+    const idx = indexForKey('RPS_OIL');
+    if (idx !== -1) return idx;
+  }
+  if (hasRapeseed) {
+    const idx = indexForKey('RPS');
+    if (idx !== -1) return idx;
+  }
+
+  if (hasSunflower && text.includes('MEAL')) {
+    const idx = indexForKey('SFS_MEAL');
+    if (idx !== -1) return idx;
+  }
+  if (hasSunflower && text.includes('OIL')) {
+    const idx = indexForKey('SFS_OIL');
+    if (idx !== -1) return idx;
+  }
+  if (hasSunflower) {
+    const idx = indexForKey('SFS');
+    if (idx !== -1) return idx;
+  }
+
+  return COMMODITY_ORDER.length;
+};
+
+const sortDGAgriCommodities = (
+  commodities: DGAgriMetadata['commodities']
+): DGAgriMetadata['commodities'] =>
+  [...commodities].sort(
+    (a, b) =>
+      getDGAgriCommodityRank(a.id, a.label) -
+      getDGAgriCommodityRank(b.id, b.label)
+  );
 
 /**
  * ViewModel hook for EUWeeklyTradePanel
@@ -47,9 +115,10 @@ export function useEUWeeklyTradeViewModel(): EUWeeklyTradeViewModel {
       setMetadataError(null);
       try {
         const response = await dgAgriApi.getMetadata();
-        setMetadata(response);
-        if (response.commodities.length > 0) {
-          const defaultCommodity = response.commodities[0];
+        const sortedCommodities = sortDGAgriCommodities(response.commodities);
+        setMetadata({ ...response, commodities: sortedCommodities });
+        if (sortedCommodities.length > 0) {
+          const defaultCommodity = sortedCommodities[0];
           setCommodityState(defaultCommodity.id);
           if (defaultCommodity.tradeTypes.includes('Export')) {
             setTradeTypeState('Export');
@@ -106,7 +175,7 @@ export function useEUWeeklyTradeViewModel(): EUWeeklyTradeViewModel {
 
   // Computed: commodity options
   const commodityOptions = useMemo(
-    () => metadata?.commodities ?? [],
+    () => (metadata ? sortDGAgriCommodities(metadata.commodities) : []),
     [metadata]
   );
 
