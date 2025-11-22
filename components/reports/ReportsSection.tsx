@@ -26,30 +26,43 @@ interface ReportsSectionProps {
  */
 export function ReportsSection({ className }: ReportsSectionProps) {
   const vm = useReportsViewModel();
-  const trackRef = useRef<HTMLDivElement | null>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const dragState = useRef({ startX: 0, scrollLeft: 0 });
+  const [dragOffset, setDragOffset] = useState(0);
+  const isDraggingRef = useRef(false);
+  const dragState = useRef({ startX: 0, startOffset: 0 });
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    const el = trackRef.current;
-    if (!el) return;
     dragState.current = {
-      startX: e.pageX,
-      scrollLeft: el.scrollLeft,
+      startX: e.clientX,
+      startOffset: dragOffset,
     };
+    isDraggingRef.current = true;
     setIsDragging(true);
     document.body.style.cursor = "grabbing";
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !trackRef.current) return;
+    if (!isDraggingRef.current) return;
     e.preventDefault();
-    const el = trackRef.current;
-    const walk = (e.pageX - dragState.current.startX) * 1.5;
-    el.scrollLeft = dragState.current.scrollLeft - walk;
+
+    const delta = e.clientX - dragState.current.startX;
+    let newOffset = dragState.current.startOffset + delta;
+
+    // Wrap offset to stay within one group width (infinite scroll)
+    const groupWidth = groupRef.current?.offsetWidth;
+    if (groupWidth && groupWidth > 0) {
+      // Normalize to stay within [-groupWidth, 0]
+      newOffset = newOffset % groupWidth;
+      if (newOffset > 0) newOffset -= groupWidth;
+    }
+
+    setDragOffset(newOffset);
   };
 
   const endDrag = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
     setIsDragging(false);
     document.body.style.cursor = "default";
   };
@@ -76,44 +89,53 @@ export function ReportsSection({ className }: ReportsSectionProps) {
 
       {/* Infinite Scrolling Marquee for Commodity Reports */}
       {vm.featuredReports.length > 0 && (
-        <div className="relative">
+        <div className="relative overflow-hidden">
           {/* Fade edges */}
           <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#0f172a] to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0f172a] to-transparent z-10 pointer-events-none" />
 
           {/* Viewport with drag support */}
           <div
-            ref={trackRef}
-            className="overflow-x-hidden select-none cursor-grab"
+            className="select-none cursor-grab"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={endDrag}
             onMouseLeave={endDrag}
           >
-            {/* Moving strip - cards rendered twice for seamless loop */}
-            <div className="marquee-row">
-              {/* First set of cards */}
-              {vm.featuredReports.map((report) => (
-                <div key={`first-${report.id}`} className="marquee-item">
-                  <ReportCard
-                    report={report}
-                    formatDate={vm.formatDate}
-                    selectedReport={vm.selectedReport}
-                    onSelectReport={vm.setSelectedReport}
-                  />
+            {/* Drag wrapper applies manual offset */}
+            <div
+              className="marquee-drag-wrapper"
+              style={{ "--drag-offset": `${dragOffset}px` } as React.CSSProperties}
+            >
+              {/* Track holds two groups for seamless loop */}
+              <div className={cn("marquee-track", isDragging && "is-dragging")}>
+                {/* First group of cards */}
+                <div ref={groupRef} className="marquee-group">
+                  {vm.featuredReports.map((report) => (
+                    <div key={`first-${report.id}`} className="marquee-card">
+                      <ReportCard
+                        report={report}
+                        formatDate={vm.formatDate}
+                        selectedReport={vm.selectedReport}
+                        onSelectReport={vm.setSelectedReport}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-              {/* Second set of cards (duplicate for seamless loop) */}
-              {vm.featuredReports.map((report) => (
-                <div key={`second-${report.id}`} className="marquee-item">
-                  <ReportCard
-                    report={report}
-                    formatDate={vm.formatDate}
-                    selectedReport={vm.selectedReport}
-                    onSelectReport={vm.setSelectedReport}
-                  />
+                {/* Duplicate group for seamless scroll */}
+                <div className="marquee-group" aria-hidden="true">
+                  {vm.featuredReports.map((report) => (
+                    <div key={`second-${report.id}`} className="marquee-card">
+                      <ReportCard
+                        report={report}
+                        formatDate={vm.formatDate}
+                        selectedReport={vm.selectedReport}
+                        onSelectReport={vm.setSelectedReport}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>

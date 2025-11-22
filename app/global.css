@@ -89,12 +89,15 @@
   --font-mono: var(--font-geist-mono);
 
   /* Marquee animation for Tailwind v4 */
-  @keyframes marquee-x {
+  --gap: 1.5rem;
+
+  @keyframes marquee-scroll {
     from {
       transform: translateX(0);
     }
     to {
-      transform: translateX(-50%);
+      /* move by 100% of one group + its trailing gap */
+      transform: translateX(calc(-100% - var(--gap)));
     }
   }
 }
@@ -175,19 +178,39 @@ svg[class*="recharts"] * {
 }
 
 /* Infinite Marquee Animation for Reports Carousel */
-.marquee-row {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 1.5rem;
-  width: max-content;
-  animation: marquee-x 60s linear infinite;
+
+/* Drag wrapper - applies manual offset */
+.marquee-drag-wrapper {
+  --drag-offset: 0px;
+  transform: translateX(var(--drag-offset));
 }
 
-.marquee-item {
+/* Track - animated strip */
+.marquee-track {
+  display: flex;
+  gap: var(--gap);
+  animation: marquee-scroll 60s linear infinite;
+}
+
+/* Pause animation while dragging or on hover */
+.marquee-track.is-dragging {
+  animation-play-state: paused;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Each group spans full width so calc(-100%) is correct */
+.marquee-group {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 100%;
+  gap: var(--gap);
+}
+
+/* Fixed width for each card */
+.marquee-card {
   flex: 0 0 auto;
   width: 350px;
-}
-
-.marquee-row:hover {
-  animation-play-state: paused;
 }

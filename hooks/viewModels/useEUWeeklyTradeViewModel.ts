@@ -158,8 +158,14 @@ export function useEUWeeklyTradeViewModel(): EUWeeklyTradeViewModel {
     const maxValue = chartData.length
       ? Math.max(...chartData.map((item) => item.value))
       : 0;
-    const roundedMax = Math.ceil(maxValue / 10000) * 10000;
-    return roundedMax + 40000;
+    if (maxValue === 0) {
+      return 40000;
+    }
+
+    const padding = Math.max(40000, maxValue * 0.25);
+    const rawMax = maxValue + padding;
+    const roundedMax = Math.ceil(rawMax / 10000) * 10000;
+    return roundedMax;
   }, [chartData]);
 
   // Computed: percent change year-over-year

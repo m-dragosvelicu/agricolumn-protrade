@@ -398,7 +398,7 @@ function ExportChart({ vm }: ChartSectionProps) {
                   margin={{
                     top: 20,
                     right: vm.isMobile ? 10 : 30,
-                    left: vm.isMobile ? 0 : 20,
+                    left: vm.isMobile ? 32 : 48,
                     bottom: vm.isMobile ? 60 : 40,
                   }}
                 >
@@ -415,10 +415,11 @@ function ExportChart({ vm }: ChartSectionProps) {
                     fontSize={vm.isMobile ? 10 : 12}
                     tickFormatter={(value) => numberFormatter.format(value)}
                     stroke="#9ca3af"
+                    width={vm.isMobile ? 44 : 64}
                     label={{
                       value: 'QTY (tonnes)',
                       angle: -90,
-                      position: 'insideLeft',
+                      position: 'left',
                       style: { fill: '#9ca3af', fontSize: vm.isMobile ? 10 : 12 },
                     }}
                   />

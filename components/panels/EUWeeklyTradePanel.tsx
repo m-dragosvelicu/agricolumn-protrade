@@ -308,6 +308,12 @@ function EUWeeklyTradeChart({
                 color: '#ffffff',
                 fontSize: '14px',
               }}
+              labelStyle={{
+                color: '#e5e7eb',
+              }}
+              itemStyle={{
+                color: baseColor,
+              }}
               formatter={(value: number) => [
                 `${value.toLocaleString()} tonnes`,
                 'Volume',
