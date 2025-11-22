@@ -6,6 +6,11 @@ import type {
   CreateBillingInfoDto,
 } from '@/types/subscription';
 
+export interface AdminSubscriberStats {
+  totalSubscribers: number;
+  byStatus: Record<string, number>;
+}
+
 export const subscriptionsApi = {
   async getPlans(): Promise<SubscriptionPlan[]> {
     const response = await api.get<SubscriptionPlan[]>('/subscriptions/plans');
@@ -74,5 +79,12 @@ export const subscriptionsApi = {
       data,
     );
     return response.data.billingInfo;
+  },
+
+  async getAdminSubscriberStats(): Promise<AdminSubscriberStats> {
+    const response = await api.get<AdminSubscriberStats>(
+      '/subscriptions/admin/stats',
+    );
+    return response.data;
   },
 };

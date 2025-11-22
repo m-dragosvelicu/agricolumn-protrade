@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usersApi, UserListItem } from '@/lib/api/users';
+import { subscriptionsApi } from '@/lib/api/subscriptions';
 import { UserRole } from '@/types/auth';
 import { Search, Users as UsersIcon, Mail, Shield, Calendar } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
@@ -16,6 +17,8 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [subscribedCount, setSubscribedCount] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -25,10 +28,34 @@ export default function UsersPage() {
   const loadUsers = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await usersApi.getAllUsers();
       setUsers(data);
-    } catch (error) {
-      console.error('Failed to load users:', error);
+
+      try {
+        const stats = await subscriptionsApi.getAdminSubscriberStats();
+        setSubscribedCount(stats.totalSubscribers);
+      } catch (err: any) {
+        if (err?.response?.status === 403) {
+          // Not authorized to see subscriber stats; show users but no subscribed count
+          setSubscribedCount(null);
+        } else {
+          throw err;
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to load users:', err);
+      if (err?.response?.status === 403) {
+        setError('You are not authorized to view users.');
+      } else {
+        setError(
+          err?.response?.data?.message ||
+            err?.message ||
+            'Failed to load users.',
+        );
+      }
+      setUsers([]);
+      setSubscribedCount(null);
     } finally {
       setLoading(false);
     }
@@ -72,6 +99,12 @@ export default function UsersPage() {
         </p>
       </div>
 
+      {error && (
+        <p className="text-sm text-red-400">
+          {error}
+        </p>
+      )}
+
       {/* Search Card */}
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
@@ -106,7 +139,12 @@ export default function UsersPage() {
             <div>
               <CardTitle className="text-white">All Users</CardTitle>
               <CardDescription className="text-slate-400">
-                Total: {users.length} user{users.length !== 1 ? 's' : ''}
+                Total: {users.length} user{users.length !== 1 ? 's' : ''}{' '}
+                {subscribedCount !== null && (
+                  <span className="ml-1">
+                    · Subscribed: {subscribedCount}
+                  </span>
+                )}
               </CardDescription>
             </div>
             <UsersIcon className="h-5 w-5 text-slate-400" />
@@ -186,4 +224,3 @@ export default function UsersPage() {
     </div>
   );
 }
-

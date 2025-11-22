@@ -1,5 +1,5 @@
 import api from '@/lib/api/client';
-import { User } from '@/types/auth';
+import type { Subscription, SubscriptionStatus } from '@/types/subscription';
 
 export interface UserListItem {
   id: string;
@@ -9,6 +9,8 @@ export interface UserListItem {
   lastName?: string;
   isActive: boolean;
   createdAt: string;
+  subscription?: Subscription | null;
+  subscriptionStatus?: SubscriptionStatus | null;
 }
 
 export interface UserDetail extends UserListItem {
@@ -31,4 +33,3 @@ export const usersApi = {
     return response.data;
   },
 };
-
