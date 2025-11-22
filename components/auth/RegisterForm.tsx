@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, Lock, User, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const registerSchema = z
   .object({
@@ -32,6 +33,16 @@ const registerSchema = z
     confirmPassword: z.string(),
     firstName: z.string().optional(),
     lastName: z.string().optional(),
+    acceptedTerms: z
+      .boolean()
+      .refine((val) => val, {
+        message: 'You must agree to the Terms and Conditions.',
+      }),
+    acceptedPrivacy: z
+      .boolean()
+      .refine((val) => val, {
+        message: 'You must agree to the Privacy Policy (GDPR consent).',
+      }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -50,9 +61,14 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      acceptedTerms: false,
+      acceptedPrivacy: false,
+    },
   });
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -193,6 +209,74 @@ export function RegisterForm() {
             {errors.confirmPassword && (
               <p className="text-sm text-destructive">
                 {errors.confirmPassword.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <Controller
+              name="acceptedTerms"
+              control={control}
+              render={({ field }) => (
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="acceptedTerms"
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(!!checked)}
+                  />
+                  <label
+                    htmlFor="acceptedTerms"
+                    className="text-sm text-slate-300 leading-snug"
+                  >
+                    I have read and agree to the{' '}
+                    <Link
+                      href="/terms"
+                      className="text-primary hover:underline"
+                      target="_blank"
+                    >
+                      Terms and Conditions
+                    </Link>
+                    .
+                  </label>
+                </div>
+              )}
+            />
+            {errors.acceptedTerms && (
+              <p className="text-xs text-destructive">
+                {errors.acceptedTerms.message}
+              </p>
+            )}
+
+            <Controller
+              name="acceptedPrivacy"
+              control={control}
+              render={({ field }) => (
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="acceptedPrivacy"
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(!!checked)}
+                  />
+                  <label
+                    htmlFor="acceptedPrivacy"
+                    className="text-sm text-slate-300 leading-snug"
+                  >
+                    I consent to the processing of my personal data in accordance with the{' '}
+                    <Link
+                      href="/privacy"
+                      className="text-primary hover:underline"
+                      target="_blank"
+                    >
+                      Privacy Policy (GDPR)
+                    </Link>
+                    .
+                  </label>
+                </div>
+              )}
+            />
+            {errors.acceptedPrivacy && (
+              <p className="text-xs text-destructive">
+                {errors.acceptedPrivacy.message}
               </p>
             )}
           </div>
