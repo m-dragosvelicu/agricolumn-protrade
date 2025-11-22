@@ -43,6 +43,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const { register: registerUser } = useAuth();
   const router = useRouter();
 
@@ -56,6 +57,7 @@ export function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setError(null);
+    setSuccess(false);
     setLoading(true);
 
     try {
@@ -65,8 +67,7 @@ export function RegisterForm() {
         data.firstName,
         data.lastName,
       );
-      router.push('/');
-      router.refresh();
+      setSuccess(true);
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
@@ -82,7 +83,9 @@ export function RegisterForm() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
         <CardDescription>
-          Enter your information to create an account
+          {success
+            ? 'Your account has been created. Please check your email to verify your address.'
+            : 'Enter your information to create an account'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -91,6 +94,17 @@ export function RegisterForm() {
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {success && !error && (
+            <Alert>
+              <Mail className="h-4 w-4" />
+              <AlertDescription>
+                We&apos;ve sent a confirmation email to the address you
+                provided. Please click the link in that email to verify your
+                account.
+              </AlertDescription>
             </Alert>
           )}
 
@@ -183,12 +197,14 @@ export function RegisterForm() {
             )}
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading || success}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating account...
               </>
+            ) : success ? (
+              'Check your email'
             ) : (
               'Create Account'
             )}
@@ -205,4 +221,3 @@ export function RegisterForm() {
     </Card>
   );
 }
-

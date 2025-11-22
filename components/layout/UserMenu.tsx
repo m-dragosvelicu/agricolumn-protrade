@@ -69,6 +69,12 @@ export function UserMenu({ className }: UserMenuProps) {
                 <span>Profile</span>
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/account/billing" className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Billing</span>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>
         )}
@@ -83,4 +89,3 @@ export function UserMenu({ className }: UserMenuProps) {
     </DropdownMenu>
   );
 }
-

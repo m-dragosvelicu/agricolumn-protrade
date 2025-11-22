@@ -1,3 +1,5 @@
+import type { Subscription, SubscriptionStatus } from '@/types/subscription';
+
 export enum UserRole {
   CLIENT = 'CLIENT',
   ADMIN = 'ADMIN',
@@ -11,6 +13,8 @@ export interface User {
   lastName?: string;
   emailVerified: boolean;
   createdAt: string;
+  subscription?: Subscription | null;
+  subscriptionStatus?: SubscriptionStatus;
 }
 
 export interface AuthResponse {
@@ -21,6 +25,8 @@ export interface AuthResponse {
     role: UserRole;
     firstName?: string;
     lastName?: string;
+    subscription?: Subscription | null;
+    subscriptionStatus?: SubscriptionStatus;
   };
 }
 
@@ -45,3 +51,6 @@ export interface ResetPasswordData {
   password: string;
 }
 
+export interface VerifyEmailData {
+  token: string;
+}

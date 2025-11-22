@@ -46,5 +46,12 @@ export const authApi = {
     );
     return response.data;
   },
-};
 
+  async verifyEmail(data: { token: string }): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>(
+      '/auth/verify-email',
+      data,
+    );
+    return response.data;
+  },
+};
