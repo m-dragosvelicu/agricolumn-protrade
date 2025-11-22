@@ -30,7 +30,8 @@ export default function ProfilePage() {
 
 function ProfileContent() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, subscription, hasActiveSubscription, isInTrial } =
+    useAuth();
   const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +71,25 @@ function ProfileContent() {
       .substring(0, 2)
       .toUpperCase();
   };
+
+  const formatDate = (value?: string) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const isCanceledWithAccess =
+    subscription &&
+    subscription.status === 'canceled' &&
+    new Date(subscription.currentPeriodEnd) > new Date();
+  const hasScheduledChange = Boolean(
+    subscription?.pendingPlan && subscription.pendingPlan.id,
+  );
 
   return (
     <div className="min-h-screen bg-slate-900 py-6 sm:py-10">
@@ -128,6 +148,103 @@ function ProfileContent() {
                 </div>
               </div>
             </CardHeader>
+          </Card>
+
+          {/* Subscription */}
+          <Card className="bg-slate-800 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Subscription</CardTitle>
+              <CardDescription className="text-slate-400">
+                Your current subscription status
+              </CardDescription>
+            </CardHeader>
+              <CardContent className="space-y-4">
+                {!subscription ? (
+                  <p className="text-sm text-slate-300">
+                    You do not have an active subscription yet.
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-slate-400">Plan</p>
+                      <p className="text-base font-semibold text-white">
+                        {subscription.plan.name}
+                      </p>
+                      <p className="text-sm text-slate-300">
+                        {subscription.plan.price.toLocaleString(undefined, {
+                          style: 'currency',
+                          currency: subscription.plan.currency,
+                          maximumFractionDigits: 0,
+                        })}{' '}
+                        /{' '}
+                        {subscription.plan.interval === 'month'
+                          ? 'month'
+                          : 'year'}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className="border-amber-500 text-amber-300 capitalize"
+                    >
+                      {subscription.status.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">
+                      {subscription.status === 'canceled' &&
+                      new Date(subscription.currentPeriodEnd) > new Date()
+                        ? 'Access until'
+                        : 'Next renewal'}
+                    </p>
+                    <p className="text-sm text-slate-200">
+                      {formatDate(subscription.currentPeriodEnd)}
+                    </p>
+                  </div>
+                  {hasActiveSubscription && !isCanceledWithAccess && (
+                    <p className="text-xs text-emerald-300">
+                      {isInTrial
+                        ? 'Your trial is active.'
+                        : 'Your subscription is active.'}{' '}
+                      Recurring billing is enabled.
+                    </p>
+                  )}
+                  {isCanceledWithAccess && (
+                    <p className="text-xs text-amber-300">
+                      Your subscription will end on{' '}
+                      {formatDate(subscription.currentPeriodEnd)}. You still have
+                      access until then, but it won&apos;t renew automatically.
+                    </p>
+                  )}
+                  {hasScheduledChange && (
+                    <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
+                      <p className="font-semibold text-amber-200">
+                        Scheduled plan change at renewal
+                      </p>
+                      <p className="mt-1">
+                        Will switch to{' '}
+                        <span className="font-semibold">
+                          {subscription.pendingPlan?.name || 'new plan'}
+                        </span>{' '}
+                        on{' '}
+                        {formatDate(
+                          subscription.pendingPlanEffectiveDate ||
+                            subscription.currentPeriodEnd,
+                        )}
+                        .
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+              <Button
+                variant="outline"
+                className="border-slate-600 text-slate-200 hover:bg-slate-700"
+                onClick={() => router.push('/account/billing')}
+              >
+                Manage subscription
+              </Button>
+            </CardContent>
           </Card>
 
           {/* Account Information */}
