@@ -87,6 +87,16 @@
   --color-ring: hsl(var(--ring));
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Marquee animation for Tailwind v4 */
+  @keyframes marquee-x {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 * {
@@ -98,7 +108,8 @@ body {
   min-height: 100vh;
   background-color: #0f172a;
   color: #e2e8f0;
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
 }
 
 /* Custom Scrollbar Styles */
@@ -138,7 +149,8 @@ body {
 }
 
 /* Prevent scrollbar from disappearing on macOS */
-* {
+html,
+body {
   overflow: overlay;
 }
 
@@ -160,4 +172,22 @@ svg[class*="recharts"] * {
 .recharts-wrapper:focus,
 .recharts-surface:focus {
   outline: none !important;
+}
+
+/* Infinite Marquee Animation for Reports Carousel */
+.marquee-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1.5rem;
+  width: max-content;
+  animation: marquee-x 60s linear infinite;
+}
+
+.marquee-item {
+  flex: 0 0 auto;
+  width: 350px;
+}
+
+.marquee-row:hover {
+  animation-play-state: paused;
 }

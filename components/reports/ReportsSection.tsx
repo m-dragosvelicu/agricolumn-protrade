@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Clock, Eye } from "lucide-react";
+import React, { useRef, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Clock, Eye } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Report } from '@/types';
-import { useReportsViewModel } from '@/hooks/viewModels';
+} from "@/components/ui/dialog";
+import { useReportsViewModel } from "@/hooks/viewModels";
+import { cn } from "@/lib/utils";
+import { Report } from "@/types";
 
 interface ReportsSectionProps {
   className?: string;
@@ -25,9 +26,36 @@ interface ReportsSectionProps {
  */
 export function ReportsSection({ className }: ReportsSectionProps) {
   const vm = useReportsViewModel();
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragState = useRef({ startX: 0, scrollLeft: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const el = trackRef.current;
+    if (!el) return;
+    dragState.current = {
+      startX: e.pageX,
+      scrollLeft: el.scrollLeft,
+    };
+    setIsDragging(true);
+    document.body.style.cursor = "grabbing";
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !trackRef.current) return;
+    e.preventDefault();
+    const el = trackRef.current;
+    const walk = (e.pageX - dragState.current.startX) * 1.5;
+    el.scrollLeft = dragState.current.scrollLeft - walk;
+  };
+
+  const endDrag = () => {
+    setIsDragging(false);
+    document.body.style.cursor = "default";
+  };
 
   return (
-    <div className={cn('', className)}>
+    <div className={cn("", className)}>
       {/* Loading State */}
       {vm.isLoading && (
         <p className="text-sm text-slate-400 mb-4">Loading reports...</p>
@@ -41,39 +69,52 @@ export function ReportsSection({ className }: ReportsSectionProps) {
       {/* Empty State */}
       {!vm.isLoading && !vm.error && vm.reports.length === 0 && (
         <p className="text-sm text-slate-400 mb-4">
-          No reports available yet. New articles will appear here once published.
+          No reports available yet. New articles will appear here once
+          published.
         </p>
       )}
 
       {/* Infinite Scrolling Marquee for Commodity Reports */}
       {vm.featuredReports.length > 0 && (
-        <div className="relative overflow-hidden">
+        <div className="relative">
           {/* Fade edges */}
           <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#0f172a] to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0f172a] to-transparent z-10 pointer-events-none" />
 
-          {/* Marquee container - cards rendered twice for seamless loop */}
-          <div className="flex animate-marquee">
-            {/* First set of cards */}
-            {vm.featuredReports.map((report) => (
-              <ReportCard
-                key={`first-${report.id}`}
-                report={report}
-                formatDate={vm.formatDate}
-                selectedReport={vm.selectedReport}
-                onSelectReport={vm.setSelectedReport}
-              />
-            ))}
-            {/* Second set of cards (duplicate for seamless loop) */}
-            {vm.featuredReports.map((report) => (
-              <ReportCard
-                key={`second-${report.id}`}
-                report={report}
-                formatDate={vm.formatDate}
-                selectedReport={vm.selectedReport}
-                onSelectReport={vm.setSelectedReport}
-              />
-            ))}
+          {/* Viewport with drag support */}
+          <div
+            ref={trackRef}
+            className="overflow-x-hidden select-none cursor-grab"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={endDrag}
+            onMouseLeave={endDrag}
+          >
+            {/* Moving strip - cards rendered twice for seamless loop */}
+            <div className="marquee-row">
+              {/* First set of cards */}
+              {vm.featuredReports.map((report) => (
+                <div key={`first-${report.id}`} className="marquee-item">
+                  <ReportCard
+                    report={report}
+                    formatDate={vm.formatDate}
+                    selectedReport={vm.selectedReport}
+                    onSelectReport={vm.setSelectedReport}
+                  />
+                </div>
+              ))}
+              {/* Second set of cards (duplicate for seamless loop) */}
+              {vm.featuredReports.map((report) => (
+                <div key={`second-${report.id}`} className="marquee-item">
+                  <ReportCard
+                    report={report}
+                    formatDate={vm.formatDate}
+                    selectedReport={vm.selectedReport}
+                    onSelectReport={vm.setSelectedReport}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -97,7 +138,7 @@ function ReportCard({
   onSelectReport,
 }: ReportCardProps) {
   return (
-    <div className="flex-shrink-0 w-[350px] px-3">
+    <div>
       <Card className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow-lg overflow-hidden h-64 flex flex-col">
         <CardHeader className="border-b border-slate-700/50 pb-3">
           <div className="flex items-center justify-between gap-2">
