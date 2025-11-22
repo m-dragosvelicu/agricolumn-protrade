@@ -10,6 +10,8 @@ import { DGAgriPanel } from '@/components/panels/DGAgriPanel';
 import { EUWeeklyTradePanel } from '@/components/panels/EUWeeklyTradePanel';
 import { DataNavigation } from '@/components/ui/data-navigation';
 import { Separator } from '@/components/ui/separator';
+import { DashboardSubscriptionOverlay } from '@/components/subscriptions/DashboardSubscriptionOverlay';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('constanta');
@@ -35,32 +37,35 @@ export default function Home() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-12">
+    <ProtectedRoute>
+      <DashboardLayout>
+        <div className="space-y-12">
 
-        {/* Commodity Reports Section */}
-        <section>
-          <h2 className="text-3xl font-bold text-white mb-6">COMMODITY REPORTS</h2>
-          <ReportsSection />
-        </section>
+          {/* Commodity Reports Section */}
+          <section>
+            <h2 className="text-3xl font-bold text-white mb-6">COMMODITY REPORTS</h2>
+            <ReportsSection />
+          </section>
 
-        {/* Services Section with Tabs */}
-        <section>
-          <div className="mb-6">
-          </div>
-          
-          {/* Navigation Tabs */}
-          <DataNavigation 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab}
-          />
-          
-          {/* Active Panel */}
+          {/* Services Section with Tabs */}
+          <section>
+            <div className="mb-6">
+            </div>
+            
+            {/* Navigation Tabs */}
+            <DataNavigation 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab}
+            />
+            
+            {/* Active Panel */}
           <DashboardPanel>
             {renderActivePanel()}
           </DashboardPanel>
         </section>
-      </div>
-    </DashboardLayout>
+        </div>
+        <DashboardSubscriptionOverlay />
+      </DashboardLayout>
+    </ProtectedRoute>
   );
 }

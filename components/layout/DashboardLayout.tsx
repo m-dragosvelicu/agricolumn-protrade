@@ -7,9 +7,9 @@ import {
   Maximize2,
   Clock,
   Filter,
-  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UserMenu } from './UserMenu';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -35,9 +35,7 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
             <h1 className="text-2xl font-bold tracking-wider">
               <span className="text-white">PRO</span> <span className="text-primary">TRADE</span>
             </h1>
-            <div className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center border border-slate-600">
-              <User className="w-5 h-5 text-slate-400" />
-            </div>
+            <UserMenu />
           </div>
         </div>
       </header>

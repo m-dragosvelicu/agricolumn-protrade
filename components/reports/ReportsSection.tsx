@@ -1,251 +1,247 @@
-'use client';
+"use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Clock, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import { mockReports } from '@/lib/mockData';
-import { Report } from '@/types';
-import { cn } from '@/lib/utils';
-import useEmblaCarousel from 'embla-carousel-react';
+import { Clock, Eye } from "lucide-react";
+import React, { useRef, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useReportsViewModel } from "@/hooks/viewModels";
+import { cn } from "@/lib/utils";
+import { Report } from "@/types";
 
 interface ReportsSectionProps {
   className?: string;
 }
 
-const AUTOPLAY_DURATION_MS = 7000;
-
+/**
+ * ReportsSection - View Component
+ * Pure presentational component that renders UI based on ViewModel state
+ */
 export function ReportsSection({ className }: ReportsSectionProps) {
-  const [reports] = useState<Report[]>(mockReports);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const isHoveredRef = useRef(false);
-  const isAutoplayingRef = useRef(false);
+  const vm = useReportsViewModel();
+  const groupRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const isDraggingRef = useRef(false);
+  const dragState = useRef({ startX: 0, startOffset: 0 });
 
-  // Carousel setup
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
-    align: 'start',
-    slidesToScroll: 1,
-    duration: AUTOPLAY_DURATION_MS,
-    breakpoints: {
-      '(min-width: 768px)': { slidesToScroll: 2 },
-      '(min-width: 1024px)': { slidesToScroll: 3 }
-    }
-  });
-
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
-
-  const pauseAutoplay = useCallback(() => {
-    isAutoplayingRef.current = false;
-  }, []);
-
-  const resumeAutoplay = useCallback(
-    (triggerImmediate: boolean) => {
-      if (!emblaApi || isHoveredRef.current) return;
-      isAutoplayingRef.current = true;
-
-      if (triggerImmediate && emblaApi.internalEngine().scrollBody.settled()) {
-        window.requestAnimationFrame(() => {
-          if (!isAutoplayingRef.current || isHoveredRef.current) return;
-          emblaApi.scrollNext();
-        });
-      }
-    },
-    [emblaApi]
-  );
-
-  const scrollPrev = useCallback(() => {
-    if (!emblaApi) return;
-    pauseAutoplay();
-    emblaApi.scrollPrev();
-    resumeAutoplay(false);
-  }, [emblaApi, pauseAutoplay, resumeAutoplay]);
-
-  const scrollNext = useCallback(() => {
-    if (!emblaApi) return;
-    pauseAutoplay();
-    emblaApi.scrollNext();
-    resumeAutoplay(false);
-  }, [emblaApi, pauseAutoplay, resumeAutoplay]);
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onSelect);
-
-    return () => {
-      emblaApi.off('select', onSelect);
-      emblaApi.off('reInit', onSelect);
+  const handleMouseDown = (e: React.MouseEvent) => {
+    dragState.current = {
+      startX: e.clientX,
+      startOffset: dragOffset,
     };
-  }, [emblaApi, onSelect]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-
-    const handlePointerDown = () => pauseAutoplay();
-    const handlePointerUp = () => resumeAutoplay(false);
-    const handleSettle = () => {
-      if (!isAutoplayingRef.current || isHoveredRef.current) return;
-      emblaApi.scrollNext();
-    };
-    const handleReInit = () => resumeAutoplay(true);
-
-    resumeAutoplay(true);
-
-    emblaApi.on('pointerDown', handlePointerDown);
-    emblaApi.on('pointerUp', handlePointerUp);
-    emblaApi.on('settle', handleSettle);
-    emblaApi.on('reInit', handleReInit);
-
-    return () => {
-      pauseAutoplay();
-      emblaApi.off('pointerDown', handlePointerDown);
-      emblaApi.off('pointerUp', handlePointerUp);
-      emblaApi.off('settle', handleSettle);
-      emblaApi.off('reInit', handleReInit);
-    };
-  }, [emblaApi, pauseAutoplay, resumeAutoplay]);
-
-  const handleMouseEnter = useCallback(() => {
-    isHoveredRef.current = true;
-    pauseAutoplay();
-  }, [pauseAutoplay]);
-
-  const handleMouseLeave = useCallback(() => {
-    isHoveredRef.current = false;
-    resumeAutoplay(true);
-  }, [resumeAutoplay]);
-
-  const formatDate = (dateISO: string) => {
-    const date = new Date(dateISO);
-    return date.toLocaleDateString();
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    document.body.style.cursor = "grabbing";
   };
 
-  const featuredReports = reports.filter(r => r.isRecommended).slice(0, 6);
-  const commodityTypes = ['WHEAT', 'CORN', 'BARLEY', 'RAPESEEDS', 'SUNFLOWER SEEDS', 'SOY COMPLEX'];
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current) return;
+    e.preventDefault();
+
+    const delta = e.clientX - dragState.current.startX;
+    let newOffset = dragState.current.startOffset + delta;
+
+    // Wrap offset to stay within one group width (infinite scroll)
+    const groupWidth = groupRef.current?.offsetWidth;
+    if (groupWidth && groupWidth > 0) {
+      // Normalize to stay within [-groupWidth, 0]
+      newOffset = newOffset % groupWidth;
+      if (newOffset > 0) newOffset -= groupWidth;
+    }
+
+    setDragOffset(newOffset);
+  };
+
+  const endDrag = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    document.body.style.cursor = "default";
+  };
 
   return (
     <div className={cn("", className)}>
-      {/* Scrollable Carousel for Commodity Reports */}
-      <div className="relative">
-        {/* Navigation Buttons */}
-        <div className="flex items-center justify-end gap-2 mb-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={scrollPrev}
-            disabled={!canScrollPrev}
-            className={cn(
-              "h-8 w-8 rounded-full border-slate-700/50 bg-slate-800/50 transition-all duration-200",
-              canScrollPrev
-                ? "hover:bg-amber-500 hover:border-amber-500"
-                : "opacity-50 cursor-not-allowed"
-            )}
-          >
-            <ChevronLeft className={cn(
-              "h-4 w-4 transition-colors",
-              canScrollPrev ? "text-white" : "text-slate-500"
-            )} />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={scrollNext}
-            disabled={!canScrollNext}
-            className={cn(
-              "h-8 w-8 rounded-full border-slate-700/50 bg-slate-800/50 transition-all duration-200",
-              canScrollNext
-                ? "hover:bg-amber-500 hover:border-amber-500"
-                : "opacity-50 cursor-not-allowed"
-            )}
-          >
-            <ChevronRight className={cn(
-              "h-4 w-4 transition-colors",
-              canScrollNext ? "text-white" : "text-slate-500"
-            )} />
-          </Button>
-        </div>
+      {/* Loading State */}
+      {vm.isLoading && (
+        <p className="text-sm text-slate-400 mb-4">Loading reports...</p>
+      )}
 
-        {/* Carousel Container */}
-        <div
-          className="overflow-hidden"
-          ref={emblaRef}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          <div className="flex -ml-6">
-            {commodityTypes.map((commodity) => {
-              const report = featuredReports.find(r => r.tags.includes(commodity)) || featuredReports[0];
-              return (
-                <div
-                  key={commodity}
-                  className="pl-6 flex-[0_0_100%] min-w-0 md:flex-[0_0_calc(50%-1.5rem)] lg:flex-[0_0_calc(33.333%-1.5rem)]"
-                >
-                  <Card className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow-lg overflow-hidden h-64 flex flex-col">
-                    <CardHeader className="border-b border-slate-700/50 pb-3">
-                      <h3 className="text-white font-bold text-lg tracking-wide">{commodity}</h3>
-                    </CardHeader>
-                    <CardContent className="pt-4 flex flex-col flex-1">
-                      <p className="text-slate-400 text-sm mb-4 h-24 line-clamp-6">
-                        {report?.summary || `Sample report content for ${commodity}. The quick brown fox jumps over the lazy dog. This text is a placeholder and will be replaced with actual report data.`}
-                      </p>
-                      <div className="flex justify-end mt-auto">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <button
-                              className="text-yellow-500 hover:text-yellow-400 text-sm font-semibold transition-colors"
-                              onClick={() => setSelectedReport(report)}
-                            >
-                              Read more
-                            </button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle className="text-xl">{selectedReport?.title}</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                <div className="flex items-center">
-                                  <Clock className="mr-1 h-3 w-3" />
-                                  {selectedReport && formatDate(selectedReport.dateISO)}
-                                </div>
-                                <div className="flex items-center">
-                                  <Eye className="mr-1 h-3 w-3" />
-                                  245
-                                </div>
-                              </div>
-                              <div className="flex flex-wrap gap-1 mb-4">
-                                {selectedReport?.tags.map(tag => (
-                                  <Badge key={tag} variant="outline">{tag}</Badge>
-                                ))}
-                              </div>
-                              <div className="prose prose-sm max-w-none dark:prose-invert">
-                                <div className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                                  {selectedReport?.body}
-                                </div>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </CardContent>
-                  </Card>
+      {/* Error State */}
+      {!vm.isLoading && vm.error && (
+        <p className="text-sm text-red-400 mb-4">{vm.error}</p>
+      )}
+
+      {/* Empty State */}
+      {!vm.isLoading && !vm.error && vm.reports.length === 0 && (
+        <p className="text-sm text-slate-400 mb-4">
+          No reports available yet. New articles will appear here once
+          published.
+        </p>
+      )}
+
+      {/* Infinite Scrolling Marquee for Commodity Reports */}
+      {vm.featuredReports.length > 0 && (
+        <div className="relative overflow-hidden">
+          {/* Fade edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#0f172a] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0f172a] to-transparent z-10 pointer-events-none" />
+
+          {/* Viewport with drag support */}
+          <div
+            className="select-none cursor-grab"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={endDrag}
+            onMouseLeave={endDrag}
+          >
+            {/* Drag wrapper applies manual offset */}
+            <div
+              className="marquee-drag-wrapper"
+              style={{ "--drag-offset": `${dragOffset}px` } as React.CSSProperties}
+            >
+              {/* Track holds two groups for seamless loop */}
+              <div className={cn("marquee-track", isDragging && "is-dragging")}>
+                {/* First group of cards */}
+                <div ref={groupRef} className="marquee-group">
+                  {vm.featuredReports.map((report) => (
+                    <div key={`first-${report.id}`} className="marquee-card">
+                      <ReportCard
+                        report={report}
+                        formatDate={vm.formatDate}
+                        selectedReport={vm.selectedReport}
+                        onSelectReport={vm.setSelectedReport}
+                      />
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
+                {/* Duplicate group for seamless scroll */}
+                <div className="marquee-group" aria-hidden="true">
+                  {vm.featuredReports.map((report) => (
+                    <div key={`second-${report.id}`} className="marquee-card">
+                      <ReportCard
+                        report={report}
+                        formatDate={vm.formatDate}
+                        selectedReport={vm.selectedReport}
+                        onSelectReport={vm.setSelectedReport}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+    </div>
+  );
+}
+
+// --- Sub-components (pure presentational) ---
+
+interface ReportCardProps {
+  report: Report;
+  formatDate: (dateISO: string) => string;
+  selectedReport: Report | null;
+  onSelectReport: (report: Report | null) => void;
+}
+
+function ReportCard({
+  report,
+  formatDate,
+  selectedReport,
+  onSelectReport,
+}: ReportCardProps) {
+  return (
+    <div>
+      <Card className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow-lg overflow-hidden h-64 flex flex-col">
+        <CardHeader className="border-b border-slate-700/50 pb-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-white font-bold text-lg tracking-wide line-clamp-1">
+              {report.title}
+            </h3>
+            {report.isNew && (
+              <span className="text-[10px] uppercase tracking-wide bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">
+                New
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            {formatDate(report.dateISO)}
+          </p>
+        </CardHeader>
+        <CardContent className="pt-4 flex flex-col flex-1">
+          <p className="text-slate-400 text-sm mb-4 line-clamp-4">
+            {report.summary}
+          </p>
+          <div className="mt-auto flex justify-between items-center">
+            <div className="flex flex-wrap gap-1 max-w-[60%]">
+              {report.tags.slice(0, 3).map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="text-[10px] px-2 py-0"
+                >
+                  {tag}
+                </Badge>
+              ))}
+              {report.tags.length > 3 && (
+                <span className="text-[10px] text-slate-500">
+                  +{report.tags.length - 3} more
+                </span>
+              )}
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  className="text-yellow-500 hover:text-yellow-400 text-sm font-semibold transition-colors"
+                  onClick={() => onSelectReport(report)}
+                >
+                  Read more
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-xl">
+                    {selectedReport?.title}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    <div className="flex items-center">
+                      <Clock className="mr-1 h-3 w-3" />
+                      {selectedReport && formatDate(selectedReport.dateISO)}
+                    </div>
+                    <div className="flex items-center">
+                      <Eye className="mr-1 h-3 w-3" />
+                      245
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {selectedReport?.tags.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                      {selectedReport?.body}
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

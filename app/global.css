@@ -87,6 +87,19 @@
   --color-ring: hsl(var(--ring));
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Marquee animation for Tailwind v4 */
+  --gap: 1.5rem;
+
+  @keyframes marquee-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      /* move by 100% of one group + its trailing gap */
+      transform: translateX(calc(-100% - var(--gap)));
+    }
+  }
 }
 
 * {
@@ -98,13 +111,14 @@ body {
   min-height: 100vh;
   background-color: #0f172a;
   color: #e2e8f0;
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
 }
 
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -124,8 +138,27 @@ body {
 
 /* Firefox Scrollbar */
 * {
-  scrollbar-width: thin;
+  scrollbar-width: auto;
   scrollbar-color: #475569 #1e293b;
+}
+
+/* Force scrollbar to always be visible */
+::-webkit-scrollbar-thumb {
+  visibility: visible !important;
+}
+
+::-webkit-scrollbar-track {
+  visibility: visible !important;
+}
+
+/* Prevent scrollbar from disappearing on macOS */
+html,
+body {
+  overflow: overlay;
+}
+
+*::-webkit-scrollbar {
+  -webkit-appearance: none;
 }
 
 /* Remove focus outline from Recharts SVG elements */
@@ -142,4 +175,42 @@ svg[class*="recharts"] * {
 .recharts-wrapper:focus,
 .recharts-surface:focus {
   outline: none !important;
+}
+
+/* Infinite Marquee Animation for Reports Carousel */
+
+/* Drag wrapper - applies manual offset */
+.marquee-drag-wrapper {
+  --drag-offset: 0px;
+  transform: translateX(var(--drag-offset));
+}
+
+/* Track - animated strip */
+.marquee-track {
+  display: flex;
+  gap: var(--gap);
+  animation: marquee-scroll 60s linear infinite;
+}
+
+/* Pause animation while dragging or on hover */
+.marquee-track.is-dragging {
+  animation-play-state: paused;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Each group spans full width so calc(-100%) is correct */
+.marquee-group {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 100%;
+  gap: var(--gap);
+}
+
+/* Fixed width for each card */
+.marquee-card {
+  flex: 0 0 auto;
+  width: 350px;
 }

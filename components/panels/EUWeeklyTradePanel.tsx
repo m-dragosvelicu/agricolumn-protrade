@@ -1,301 +1,360 @@
-"use client";
+'use client';
 
-import React, { useState, useMemo } from "react";
+import React from 'react';
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import {
-  getWeeklyTradeData,
-  calculateYearOverYearChange,
-} from "@/lib/weeklyTradeData";
-import { colorForCommodity } from "@/lib/commodityColors";
+} from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import { useEUWeeklyTradeViewModel, type EUWeeklyTradeChartDataPoint } from '@/hooks/viewModels';
+import type { DGAgriMetadata, DGAgriTradeType } from '@/lib/api/dgAgri';
 
 interface EUWeeklyTradePanelProps {
   className?: string;
 }
 
-// Commodity definitions matching DG AGRI
-const commodities = [
-  { id: "WHEAT", label: "Wheat" },
-  { id: "BARLEY", label: "Barley" },
-  { id: "CORN", label: "Corn" },
-  { id: "RAPESEED", label: "Rapeseed" },
-  { id: "SUNFLOWER", label: "Sunflower" },
-  { id: "RAPESEED_OIL", label: "Rapeseed Oil" },
-  { id: "SUNFLOWER_OIL", label: "Sunflower Oil" },
-  { id: "SOYBEANS", label: "Soybeans" },
-  { id: "SOY_OIL", label: "Soy Oil" },
-  { id: "RPS_MEAL", label: "RPS Meal" },
-  { id: "SFS_MEAL", label: "SFS Meal" },
-  { id: "SOY_MEAL", label: "Soy Meal" },
-];
-
-// Helper to add alpha transparency to hex colors
-const withAlpha = (hex: string, alpha: number): string => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
+/**
+ * EUWeeklyTradePanel - View Component
+ * Pure presentational component that renders UI based on ViewModel state
+ */
 export function EUWeeklyTradePanel({ className }: EUWeeklyTradePanelProps) {
-  const [tradeType, setTradeType] = useState<"Export" | "Import">("Export");
-  const [commodity, setCommodity] = useState("WHEAT");
-
-  // Get commodity color
-  const baseColor = useMemo(() => colorForCommodity(commodity), [commodity]);
-  const lastYearColor = useMemo(() => withAlpha(baseColor, 0.45), [baseColor]);
-
-  // Get data for selected commodity and trade type
-  const weeklyData = getWeeklyTradeData(commodity, tradeType);
-
-  // Calculate percentage change
-  const percentChange = weeklyData
-    ? calculateYearOverYearChange(
-        weeklyData.thisYearVolume,
-        weeklyData.lastYearVolume
-      )
-    : 0;
-
-  // Prepare chart data (horizontal bars)
-  const chartData = weeklyData
-    ? [
-        {
-          category: `${weeklyData.year}`,
-          value: weeklyData.thisYearVolume,
-          label: "This Year",
-          fill: baseColor,
-        },
-        {
-          category: `${weeklyData.year - 1}`,
-          value: weeklyData.lastYearVolume,
-          label: "Last Year",
-          fill: lastYearColor,
-        },
-      ]
-    : [];
-
-  // Calculate dynamic X-axis domain for clean display (horizontal chart)
-  const maxValue = weeklyData
-    ? Math.max(weeklyData.thisYearVolume, weeklyData.lastYearVolume)
-    : 0;
-  const roundedMax = Math.ceil(maxValue / 10000) * 10000;
-  const xAxisMax = roundedMax + 40000;
+  const vm = useEUWeeklyTradeViewModel();
 
   return (
     <Card
       className={cn(
-        "h-full flex flex-col bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50",
+        'h-full flex flex-col bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50',
         className
       )}
     >
-      <CardHeader className="border-b border-slate-700/50 pb-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <CardTitle className="text-white">
-                EU Weekly Trade Comparison
-              </CardTitle>
-              <Badge
-                variant="outline"
-                className="border-amber-500/50 text-amber-400 bg-amber-500/10"
-              >
-                DEMO
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              EU-wide {tradeType.toLowerCase()} volumes: Current week vs same
-              week last year
-            </p>
-          </div>
-        </div>
-      </CardHeader>
+      {/* Header */}
+      <EUWeeklyTradeHeader weekLabel={vm.summary?.weekLabel} />
 
       <CardContent className="flex-1 p-0 flex flex-col">
-        {/* Trade Type Toggle (Export/Import) */}
-        <div className="px-4 py-3 border-b border-slate-700/50">
-          <Tabs
-            value={tradeType}
-            onValueChange={(value) => setTradeType(value as "Export" | "Import")}
-          >
-            <TabsList className="w-full flex justify-center gap-2">
-              <TabsTrigger value="Export" className="flex-1">
-                Export
-              </TabsTrigger>
-              <TabsTrigger value="Import" className="flex-1">
-                Import
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+        {/* Trade Type Selector */}
+        <TradeTypeSelector
+          tradeType={vm.tradeType}
+          onTradeTypeChange={vm.setTradeType}
+        />
 
-        {/* Commodity Selection */}
-        <div className="px-4 py-3 border-b border-slate-700/50">
-          {/* Mobile: Select dropdown */}
-          <div className="block md:hidden">
-            <Select value={commodity} onValueChange={setCommodity}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {commodities.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Commodity Selector */}
+        <CommoditySelector
+          commodityOptions={vm.commodityOptions}
+          commodity={vm.commodity}
+          isLoading={vm.isMetadataLoading}
+          onCommodityChange={vm.setCommodity}
+        />
 
-          {/* Desktop: Horizontal scrolling tabs */}
-          <div className="hidden md:block overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
-            <div className="flex gap-2 min-w-max">
-              {commodities.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setCommodity(c.id)}
-                  className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                    commodity === c.id
-                      ? "bg-slate-700 text-white"
-                      : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-                  )}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Chart Section */}
-        <div className="flex-1 p-4">
-          {weeklyData ? (
-            <div className="space-y-3">
-              {/* Week Label and Change Indicator */}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">{weeklyData.weekLabel}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">YoY Change:</span>
-                  <span
-                    className={cn(
-                      "font-semibold",
-                      percentChange > 0
-                        ? "text-green-400"
-                        : percentChange < 0
-                          ? "text-red-400"
-                          : "text-slate-400"
-                    )}
-                  >
-                    {percentChange > 0 ? "+" : ""}
-                    {percentChange.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Horizontal Bar Chart */}
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart
-                  data={chartData}
-                  layout="vertical"
-                  margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#374151"
-                    horizontal={false}
-                  />
-                  <XAxis
-                    type="number"
-                    stroke="#9ca3af"
-                    domain={[0, xAxisMax]}
-                    tickFormatter={(value) => value.toLocaleString()}
-                    label={{
-                      value: "Tonnes",
-                      position: "insideBottom",
-                      offset: -5,
-                      style: { fill: "#9ca3af", fontSize: 12 },
-                    }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="category"
-                    stroke="#9ca3af"
-                    width={70}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1f2937",
-                      border: "1px solid #374151",
-                      borderRadius: "8px",
-                      color: "#ffffff",
-                      fontSize: "14px",
-                    }}
-                    formatter={(value: number) => [
-                      `${value.toLocaleString()} tonnes`,
-                      "Volume",
-                    ]}
-                  />
-                  <Bar
-                    dataKey="value"
-                    radius={[0, 4, 4, 0]}
-                    label={{
-                      position: "right",
-                      fill: "#ffffff",
-                      formatter: (value: any) => typeof value === 'number' ? value.toLocaleString() : value,
-                      fontSize: 12,
-                    }}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-
-              {/* Legend */}
-              <div className="flex items-center justify-center gap-6 text-sm pt-2">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded"
-                    style={{ backgroundColor: baseColor }}
-                  />
-                  <span className="text-slate-300">This Year</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded"
-                    style={{ backgroundColor: lastYearColor }}
-                  />
-                  <span className="text-slate-300">Last Year</span>
-                </div>
-              </div>
-
-              {/* Demo Data Notice */}
-              <div className="text-center text-xs text-amber-400/60 pt-2">
-                Demo data for visualization purposes
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-slate-400">
-              No data available
-            </div>
-          )}
-        </div>
+        {/* Chart */}
+        <EUWeeklyTradeChart
+          chartData={vm.chartData}
+          isLoading={vm.isMetadataLoading || vm.isSummaryLoading}
+          metadataError={vm.metadataError}
+          summaryError={vm.summaryError}
+          weekLabel={vm.summary?.weekLabel || 'Current week'}
+          percentChange={vm.percentChange}
+          xAxisMax={vm.xAxisMax}
+          baseColor={vm.baseColor}
+          lastYearColor={vm.lastYearColor}
+        />
       </CardContent>
     </Card>
+  );
+}
+
+// --- Sub-components (pure presentational) ---
+
+interface EUWeeklyTradeHeaderProps {
+  weekLabel?: string | null;
+}
+
+function EUWeeklyTradeHeader({ weekLabel }: EUWeeklyTradeHeaderProps) {
+  return (
+    <CardHeader className="border-b border-slate-700/50 pb-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <CardTitle className="text-white">
+            EU Weekly Trade Comparison
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Current marketing week vs same week last year
+          </p>
+          {weekLabel && (
+            <p className="text-xs text-slate-400 mt-2">{weekLabel}</p>
+          )}
+        </div>
+      </div>
+    </CardHeader>
+  );
+}
+
+interface TradeTypeSelectorProps {
+  tradeType: DGAgriTradeType;
+  onTradeTypeChange: (tradeType: DGAgriTradeType) => void;
+}
+
+function TradeTypeSelector({
+  tradeType,
+  onTradeTypeChange,
+}: TradeTypeSelectorProps) {
+  return (
+    <div className="px-4 py-3 border-b border-slate-700/50">
+      <Tabs
+        value={tradeType}
+        onValueChange={(value) => onTradeTypeChange(value as DGAgriTradeType)}
+      >
+        <TabsList className="w-full flex justify-center gap-2">
+          <TabsTrigger value="Export" className="flex-1">
+            Export
+          </TabsTrigger>
+          <TabsTrigger value="Import" className="flex-1">
+            Import
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+    </div>
+  );
+}
+
+interface CommoditySelectorProps {
+  commodityOptions: DGAgriMetadata['commodities'];
+  commodity: string | null;
+  isLoading: boolean;
+  onCommodityChange: (commodity: string) => void;
+}
+
+function CommoditySelector({
+  commodityOptions,
+  commodity,
+  isLoading,
+  onCommodityChange,
+}: CommoditySelectorProps) {
+  return (
+    <div className="px-4 py-3 border-b border-slate-700/50">
+      {/* Mobile: Select Dropdown */}
+      <div className="block md:hidden">
+        <Select
+          value={commodity ?? undefined}
+          onValueChange={onCommodityChange}
+        >
+          <SelectTrigger
+            className="w-full"
+            disabled={isLoading || !commodityOptions.length}
+          >
+            <SelectValue placeholder="Select commodity" />
+          </SelectTrigger>
+          <SelectContent>
+            {commodityOptions.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Desktop: Scrollable Button Group */}
+      <div className="hidden md:block overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+        <div className="flex gap-2 min-w-max">
+          {commodityOptions.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => onCommodityChange(c.id)}
+              className={cn(
+                'px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
+                commodity === c.id
+                  ? 'bg-slate-700 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              )}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface EUWeeklyTradeChartProps {
+  chartData: EUWeeklyTradeChartDataPoint[];
+  isLoading: boolean;
+  metadataError: string | null;
+  summaryError: string | null;
+  weekLabel: string;
+  percentChange: number;
+  xAxisMax: number;
+  baseColor: string;
+  lastYearColor: string;
+}
+
+function EUWeeklyTradeChart({
+  chartData,
+  isLoading,
+  metadataError,
+  summaryError,
+  weekLabel,
+  percentChange,
+  xAxisMax,
+  baseColor,
+  lastYearColor,
+}: EUWeeklyTradeChartProps) {
+  if (isLoading) {
+    return (
+      <div className="flex-1 p-4 flex items-center justify-center text-slate-400 text-sm">
+        Loading weekly trade data…
+      </div>
+    );
+  }
+
+  if (metadataError) {
+    return (
+      <div className="flex-1 p-4 flex items-center justify-center text-red-300 text-sm text-center px-4">
+        {metadataError}
+      </div>
+    );
+  }
+
+  if (summaryError) {
+    return (
+      <div className="flex-1 p-4 flex items-center justify-center text-red-300 text-sm text-center px-4">
+        {summaryError}
+      </div>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <div className="flex-1 p-4 flex items-center justify-center text-slate-400 text-sm text-center px-4">
+        No weekly data available for this selection.
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 p-4">
+      <div className="space-y-3">
+        {/* Week Label and YoY Change */}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-slate-400">{weekLabel}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">YoY Change:</span>
+            <span
+              className={cn(
+                'font-semibold',
+                percentChange > 0
+                  ? 'text-green-400'
+                  : percentChange < 0
+                    ? 'text-red-400'
+                    : 'text-slate-400'
+              )}
+            >
+              {percentChange > 0 ? '+' : ''}
+              {percentChange.toFixed(1)}%
+            </span>
+          </div>
+        </div>
+
+        {/* Bar Chart */}
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#374151"
+              horizontal={false}
+            />
+            <XAxis
+              type="number"
+              stroke="#9ca3af"
+              domain={[0, xAxisMax]}
+              tickFormatter={(value) => value.toLocaleString()}
+              label={{
+                value: 'Tonnes',
+                position: 'insideBottom',
+                offset: -5,
+                style: { fill: '#9ca3af', fontSize: 12 },
+              }}
+            />
+            <YAxis
+              type="category"
+              dataKey="category"
+              stroke="#9ca3af"
+              width={70}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#1f2937',
+                border: '1px solid #374151',
+                borderRadius: '8px',
+                color: '#ffffff',
+                fontSize: '14px',
+              }}
+              labelStyle={{
+                color: '#e5e7eb',
+              }}
+              itemStyle={{
+                color: baseColor,
+              }}
+              formatter={(value: number) => [
+                `${value.toLocaleString()} tonnes`,
+                'Volume',
+              ]}
+            />
+            <Bar
+              dataKey="value"
+              radius={[0, 4, 4, 0]}
+              label={{
+                position: 'right',
+                fill: '#ffffff',
+                formatter: (value) =>
+                  typeof value === 'number' ? value.toLocaleString() : String(value),
+                fontSize: 12,
+              }}
+            >
+              {chartData.map((entry) => (
+                <Cell key={entry.category} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-6 text-sm pt-2">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded"
+              style={{ backgroundColor: baseColor }}
+            />
+            <span className="text-slate-300">This Year</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded"
+              style={{ backgroundColor: lastYearColor }}
+            />
+            <span className="text-slate-300">Last Year</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

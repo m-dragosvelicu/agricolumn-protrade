@@ -1,95 +1,72 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
+import { AlertTriangle, CheckCircle2, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileUpload } from '@/components/admin/FileUpload';
-import { Download, Upload, Table as TableIcon } from 'lucide-react';
-import { arrayToCSV, downloadCSV, parseCSV, validateCSVData, type CSVColumn } from '@/lib/csvUtils';
-
-const dgAgriColumns: CSVColumn[] = [
-  { key: 'dataset', label: 'Dataset', example: 'Wheat Export', required: true },
-  { key: 'country', label: 'Country', example: 'Romania', required: true },
-  { key: 'value', label: 'Value (tonnes)', example: '1978033', required: true },
-  { key: 'period', label: 'Period', example: '01.07.25-16.09.2025', required: true },
-];
-
-const DG_AGRI_DATASETS = [
-  'Wheat Export',
-  'Wheat Import',
-  'Corn Import',
-  'Romania RPS Export',
-  'Romania Export',
-  'Corn Export',
-  'Barley Export',
-  'Barley Import',
-  'Soybean Import',
-  'Rapeseed Export',
-  'Rapeseed Import',
-  'Sunflower Export',
-  'Sunflower Import',
-  'Rapeseed Oil Export',
-  'Rapeseed Oil Import',
-  'Sunflower Oil Export',
-  'Sunflower Oil Import',
-  'Soybeans Export',
-  'Soybeans Import',
-  'Soy Oil Export',
-  'Soy Oil Import',
-  'RPS Meal Export',
-  'RPS Meal Import',
-  'SFS Meal Export',
-  'SFS Meal Import',
-  'Soy Meal Export',
-  'Soy Meal Import',
-];
+import { FileUpload, FileUploadRef } from '@/components/admin/FileUpload';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { dgAgriApi, DGAgriImportResponse } from '@/lib/api/dgAgri';
 
 export default function DGAgriAdmin() {
-  const [uploadedData, setUploadedData] = useState<any[]>([]);
-  const [errors, setErrors] = useState<string[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [cerFile, setCerFile] = useState<File | null>(null);
+  const [oilseedsFile, setOilseedsFile] = useState<File | null>(null);
+  const cerFileUploadRef = useRef<FileUploadRef>(null);
+  const oilseedsFileUploadRef = useRef<FileUploadRef>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [importResult, setImportResult] = useState<DGAgriImportResponse | null>(
+    null,
+  );
 
-  const handleDownloadTemplate = () => {
-    const templateRows = DG_AGRI_DATASETS.map((dataset) => ({
-      dataset,
-      country: '',
-      value: '',
-      period: '',
-    }));
+  const canImport = useMemo(
+    () => !!cerFile && !!oilseedsFile && !isImporting,
+    [cerFile, oilseedsFile, isImporting],
+  );
 
-    const template = arrayToCSV(templateRows, dgAgriColumns);
-    downloadCSV(template, 'dg-agri-template.csv');
+  const resetSelection = () => {
+    setCerFile(null);
+    setOilseedsFile(null);
+    cerFileUploadRef.current?.clear();
+    oilseedsFileUploadRef.current?.clear();
   };
 
-  const handleFileSelect = async (file: File) => {
-    setIsProcessing(true);
-    setErrors([]);
+  const handleImport = async () => {
+    if (!cerFile || !oilseedsFile) {
+      setError('Please select both CER and OILSEEDS Excel files before importing.');
+      return;
+    }
+
+    setIsImporting(true);
+    setError(null);
 
     try {
-      const text = await file.text();
-      const data = parseCSV(text, dgAgriColumns);
+      const formData = new FormData();
+      formData.append('cerFile', cerFile);
+      formData.append('oilseedsFile', oilseedsFile);
 
-      const validation = validateCSVData(data, dgAgriColumns);
-
-      if (!validation.isValid) {
-        setErrors(validation.errors);
-        setUploadedData([]);
-      } else {
-        setUploadedData(data);
-        setErrors([]);
-      }
-    } catch (error) {
-      setErrors(['Failed to parse CSV file. Please check the format.']);
-      setUploadedData([]);
+      const response = await dgAgriApi.importData(formData);
+      setImportResult(response);
+      setSuccessModalOpen(true);
+      resetSelection();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Import failed. Please verify both Excel files and try again.';
+      setError(message);
     } finally {
-      setIsProcessing(false);
+      setIsImporting(false);
     }
-  };
-
-  const handleImport = () => {
-    console.log('Importing data:', uploadedData);
-    alert(`Successfully imported ${uploadedData.length} DG AGRI records!`);
-    setUploadedData([]);
   };
 
   return (
@@ -97,137 +74,149 @@ export default function DGAgriAdmin() {
       <div>
         <h1 className="text-3xl font-bold text-white mb-2">DG AGRI Data</h1>
         <p className="text-slate-400">
-          Upload EU agricultural trade data from DG AGRI reports
+          Upload the official DG AGRI trade files to refresh the dashboard data.
+          Provide the latest <span className="font-semibold text-white">CER</span>{' '}
+          and <span className="font-semibold text-white">OILSEEDS</span> Excel
+          workbooks in one import to keep the weekly charts and YTD views in sync.
         </p>
       </div>
 
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white flex items-center">
-            <Download className="mr-2 h-5 w-5" />
-            Export Template
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-slate-400">
-            Download the DG AGRI template. Datasets include: Wheat Export, Wheat Import,
-            Corn Export/Import, Barley Export/Import, Rapeseed Export/Import, Sunflower Export/Import,
-            Soybean Export/Import, and meal/oil data.
-          </p>
-          <div className="bg-slate-900/50 border border-slate-700/80 rounded-lg p-4 space-y-3">
-            <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">How to complete the CSV</h3>
-            <ol className="list-decimal list-inside text-sm text-slate-300 space-y-2">
-              <li>Download the template – each row already contains the exact dataset label used in the dashboards.</li>
-              <li>Fill in <span className="font-medium text-white">Country</span>, <span className="font-medium text-white">Value (tonnes)</span>, and <span className="font-medium text-white">Period</span> for every dataset row. Keep the dataset label unchanged.</li>
-              <li>Use tonnes as whole numbers (no separators) and date ranges in the format <code className="px-1 py-0.5 bg-slate-800 rounded">DD.MM.YY-DD.MM.YYYY</code>.</li>
-              <li>Add additional rows if DG AGRI provides more countries for a dataset – duplicate the dataset label exactly as listed.</li>
-              <li>Save the file as CSV (comma separated) before uploading.</li>
-            </ol>
-            <div>
-              <p className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-2">Allowed dataset labels</p>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-slate-300">
-                {DG_AGRI_DATASETS.map((dataset) => (
-                  <li key={dataset} className="bg-slate-800/60 border border-slate-700 rounded px-2 py-1">
-                    {dataset}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <Button
-            onClick={handleDownloadTemplate}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Download Template CSV
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center">
             <Upload className="mr-2 h-5 w-5" />
-            Upload Data
+            Upload DG AGRI Excel Files
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <FileUpload onFileSelect={handleFileSelect} accept=".csv" />
-
-          {isProcessing && (
-            <div className="text-center text-slate-400">Processing file...</div>
-          )}
-
-          {errors.length > 0 && (
-            <div className="bg-red-500/10 border border-red-500 rounded-lg p-4">
-              <h3 className="text-red-400 font-semibold mb-2">Validation Errors:</h3>
-              <ul className="list-disc list-inside space-y-1">
-                {errors.map((error, index) => (
-                  <li key={index} className="text-sm text-red-300">{error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {uploadedData.length > 0 && errors.length === 0 && (
-            <div className="space-y-4">
-              <div className="bg-green-500/10 border border-green-500 rounded-lg p-4">
-                <p className="text-green-400 font-semibold">
-                  ✓ Successfully parsed {uploadedData.length} records
+        <CardContent className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wide">
+                  CER (Cereals) Workbook
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Use the official CER TAXUD_Surv data file. The import reads 1MY
+                  and 3MY sheets for wheat, corn, and barley.
                 </p>
               </div>
-              <Button
-                onClick={handleImport}
-                className="w-full bg-amber-500 hover:bg-amber-600"
-              >
-                Import {uploadedData.length} DG AGRI Records
-              </Button>
+              <FileUpload
+                ref={cerFileUploadRef}
+                onFileSelect={(file) => setCerFile(file)}
+                onFileRemove={() => setCerFile(null)}
+                accept=".xlsx,.xls"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wide">
+                  OILSEEDS Workbook
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Upload the matching OILSEEDS TAXUD_Surv file. Palm oil data is
+                  ignored automatically.
+                </p>
+              </div>
+              <FileUpload
+                ref={oilseedsFileUploadRef}
+                onFileSelect={(file) => setOilseedsFile(file)}
+                onFileRemove={() => setOilseedsFile(null)}
+                accept=".xlsx,.xls"
+              />
+            </div>
+          </div>
+
+          <Separator className="bg-slate-700/70" />
+
+          <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-4 text-sm text-slate-300 space-y-2">
+            <p className="font-semibold text-slate-200 uppercase tracking-wide text-xs">
+              Import Checklist
+            </p>
+            <ul className="space-y-1">
+              <li>• Use the official DG AGRI weekly Excel exports (no alterations).</li>
+              <li>• Make sure both workbooks cover the same reporting date.</li>
+              <li>• Each import replaces the existing DG AGRI dataset in the platform.</li>
+            </ul>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-3 rounded-lg border border-red-500/60 bg-red-500/10 p-4 text-sm text-red-200">
+              <AlertTriangle className="h-5 w-5" />
+              <span>{error}</span>
             </div>
           )}
+
+          <div className="flex items-center justify-end">
+            <Button
+              onClick={handleImport}
+              disabled={!canImport}
+              className="bg-amber-500 hover:bg-amber-600"
+            >
+              {isImporting ? 'Importing…' : 'Import DG AGRI Data'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {uploadedData.length > 0 && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <TableIcon className="mr-2 h-5 w-5" />
-              Data Preview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-700">
-                    {dgAgriColumns.map(col => (
-                      <th key={col.key} className="text-left p-2 text-slate-400 font-medium">
-                        {col.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {uploadedData.slice(0, 15).map((row, index) => (
-                    <tr key={index} className="border-b border-slate-800">
-                      {dgAgriColumns.map(col => (
-                        <td key={col.key} className="p-2 text-slate-300">
-                          {row[col.key] || '-'}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {uploadedData.length > 15 && (
-                <p className="text-sm text-slate-400 mt-2 text-center">
-                  Showing 15 of {uploadedData.length} records
+      <Dialog
+        open={successModalOpen}
+        onOpenChange={(open) => {
+          setSuccessModalOpen(open);
+          if (!open) {
+            setImportResult(null);
+          }
+        }}
+      >
+        <DialogContent className="bg-slate-800 border-slate-700 text-white sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-400">
+              <CheckCircle2 className="h-5 w-5" />
+              DG AGRI Data Imported
+            </DialogTitle>
+            <DialogDescription className="text-slate-300">
+              The DG AGRI dashboards have been refreshed with the latest weekly and YTD data.
+            </DialogDescription>
+          </DialogHeader>
+
+          {importResult && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-4 text-sm text-slate-200">
+                <p className="font-medium text-slate-100">Summary</p>
+                <ul className="mt-2 space-y-1 text-slate-300">
+                  <li>• YTD country rows loaded: {importResult.ytdRecords}</li>
+                  <li>• Weekly time-series rows loaded: {importResult.weeklyRecords}</li>
+                  {importResult.marketingYear && (
+                    <li>• Marketing year: {importResult.marketingYear}</li>
+                  )}
+                  {importResult.periodLabel && (
+                    <li>• Period covered: {importResult.periodLabel}</li>
+                  )}
+                </ul>
+              </div>
+
+              <div className="rounded-lg border border-amber-400/50 bg-amber-500/10 p-4 text-xs text-amber-200">
+                <p className="font-semibold uppercase tracking-wide text-amber-200">
+                  Next Steps
                 </p>
-              )}
+                <p>
+                  Refresh the analytics dashboard to view the updated DG AGRI charts. Redis caches
+                  were cleared automatically.
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+
+          <DialogFooter>
+            <Button
+              onClick={() => setSuccessModalOpen(false)}
+              className="bg-amber-500 hover:bg-amber-600 text-white w-full"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

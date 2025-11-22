@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Theme } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
-import "./globals.css";
+import "./global.css";
 import { GlobalBanner } from "@/components/ui/global-banner";
 import { AccessGate } from "@/components/auth/AccessGate";
+import { AuthProvider } from "@/lib/auth/auth-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,10 +33,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Theme>
-          <GlobalBanner />
-          <AccessGate>
-            {children}
-          </AccessGate>
+          <AuthProvider>
+            <GlobalBanner />
+            <AccessGate>
+              {children}
+            </AccessGate>
+          </AuthProvider>
         </Theme>
       </body>
     </html>
